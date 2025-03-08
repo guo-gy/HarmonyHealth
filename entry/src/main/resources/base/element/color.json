@@ -1,0 +1,16 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "confirm_button_color",
+      "value": "#4CAF50"
+    },
+    {
+      "name": "cancel_button_color",
+      "value": "#F44336"
+    }
+  ]
+}

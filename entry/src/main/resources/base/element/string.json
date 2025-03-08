@@ -1,0 +1,25 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "label"
+    },
+    {
+      "name": "UserPrivacyDialog_title",
+      "value": "欢迎使用智能健康助手"
+    },
+    {
+      "name": "UserPrivacyDialog_content",
+      "value": "用户协议"
+    }
+
+  ]
+}
