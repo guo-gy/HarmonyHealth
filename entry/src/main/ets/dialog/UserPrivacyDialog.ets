@@ -7,18 +7,19 @@ export default  struct UserPrivacyDialog{
   build() {
     Column() {
       Text($r('app.string.UserPrivacyDialog_title'))
+        .margin({top:10})
       Text(){
         Span($r('app.string.UserPrivacyDialog_content'))
       }
-      Button("Yes")
-        .margin({bottom:10})
+      Button("同意")
+        .margin({top:10})
         .backgroundColor($r('app.color.confirm_button_color'))
         .onClick(()=>{
             this.confirm()
             this.controller.close()
           })
-      Button("No")
-        .margin({bottom:10})
+      Button("拒绝")
+        .margin({top:10})
         .backgroundColor($r('app.color.cancel_button_color'))
         .onClick(()=>{
           this.cancel()

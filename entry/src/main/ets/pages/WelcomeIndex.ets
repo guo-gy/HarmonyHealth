@@ -30,7 +30,7 @@ struct WelcomeIndex {
   jumpToMain(){
     setTimeout(()=>{
       router.pushUrl({
-        url: 'pages/Home',
+        url: 'pages/First',
       });
       10000;
     })
