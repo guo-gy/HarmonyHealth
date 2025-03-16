@@ -1,10 +1,12 @@
 {
   "src": [
     "pages/WelcomeIndex",
-    "pages/Home",
+    "pages/Index",
     "pages/First",
     "pages/Second",
     "pages/Third",
-    "pages/Forth"
+    "pages/Forth",
+    "pages/LoginPage",
+    "pages/RegisterPage"
   ]
 }

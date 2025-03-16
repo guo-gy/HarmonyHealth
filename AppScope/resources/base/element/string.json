@@ -2,7 +2,11 @@
   "string": [
     {
       "name": "app_name",
-      "value": "HarmonyHealth"
+      "value": "智能健康助手"
+    },
+    {
+      "name": "internet_permission_reason",
+      "value": "需要访问网络以实现登录功能"
     }
   ]
 }

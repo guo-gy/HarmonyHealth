@@ -2,7 +2,7 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "module description"
+      "value": "模块描述"
     },
     {
       "name": "EntryAbility_desc",
@@ -19,7 +19,10 @@
     {
       "name": "UserPrivacyDialog_content",
       "value": "\n用户协议\n\n本应用为山东大学基于DeepSeek的鸿蒙智能健康助手项目。\n\n项目实训项目，仅作学习使用，不含盈利目的。\n\n\n联系方式：cn.ggy@qq.com"
+    },
+    {
+      "name": "internet_permission_reason",
+      "value": "需要访问网络以实现登录功能"
     }
-
   ]
 }

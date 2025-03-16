@@ -13,7 +13,7 @@ struct WelcomeIndex {
   })
 
   dialog_confirm(){
-    this.jumpToMain()
+    this.jumpToLogin()
   }
 
   dialog_cancel(){
@@ -27,23 +27,22 @@ struct WelcomeIndex {
   exit_app(){
     (getContext(this) as common.UIAbilityContext)?.terminateSelf();
   }
-  jumpToMain(){
-    setTimeout(()=>{
+  jumpToLogin(){
+    setTimeout(() => {
       router.pushUrl({
-        url: 'pages/First',
+        url: 'pages/LoginPage'
       });
-      10000;
-    })
+    }, 1000);
   }
   build() {
     Column(){
-      Image($r('app.media.logo'))
+      Image($r('app.media.icon'))
         .width(100)
         .height(100)
         .margin({top:100})
       Text('欢迎来到智能健康助手')
         .fontSize(30)
-        .fontColor('#182431')
+        .fontColor($r('sys.color.font_primary'))
         .fontWeight(700)
         .letterSpacing(0.1)
         .opacity(0.8)

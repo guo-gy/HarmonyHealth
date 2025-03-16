@@ -27,7 +27,7 @@ struct Index {
           .width("80%")
           .height("50vp")
           .margin({ top: "10vp" })
-          .onClick(this.clickNext.bind(this))
+          .onClick(() => this.clickNext())
       }
       .width("100%")
       .height("100%")
