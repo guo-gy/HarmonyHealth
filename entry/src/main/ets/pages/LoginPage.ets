@@ -59,8 +59,8 @@ struct LoginPage {
           console.info(`[LoginPage] 登录响应: code=${response.code}, message=${response.message}`);
           //登录成功
           if (response.code === 200) {
-            console.info('[LoginPage] 登录成功，准备进入主页');
-            await router.pushUrl({ url: 'pages/Index' });
+            console.info('[LoginPage] 登录成功，准备进入问卷调查');
+            await router.pushUrl({ url: 'pages/First' }); // 修改为跳转到First页面
             //登录失败
           } else {
             console.warn('[LoginPage] 登录失败');

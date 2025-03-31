@@ -1,16 +1,40 @@
 import router from '@ohos.router';
+import { AssistantPage } from './AssistantPage';
+import { HealthPlanPage } from './HealthPlanPage';
+import { ProfilePage } from './ProfilePage';
+
+// 在文件顶部添加接口定义
+interface FormData {
+  exerciseType?: string;
+  exerciseTime?: string;
+  exerciseGoal?: string;
+  foodType?: string;
+  mealTime?: string;
+  dietGoal?: string;
+}
 
 @Entry
 @Component
 struct Index {
   @State currentIndex: number = 0;
+  @State formData: FormData = {};
   private tabsController: TabsController = new TabsController();
 
-  @Builder TabBuilder(title: string, index: number, normalImage: Resource, selectedImage: Resource) {
+  aboutToAppear() {
+    // 获取路由参数
+    const params = router.getParams() as FormData;
+    if (params) {
+      this.formData = params;
+      console.info('[Index] 收到问卷数据:', JSON.stringify(this.formData));
+    }
+  }
+  
+  @Builder TabBuilder(title: string, index: number, normalImg: Resource, selectedImg: Resource) {
     Column() {
-      Image(this.currentIndex === index ? selectedImage : normalImage)
+      Image(this.currentIndex === index ? selectedImg : normalImg)
         .width(24)
         .height(24)
+      
       Text(title)
         .fontSize(12)
         .fontColor(this.currentIndex === index ? '#007DFF' : '#666666')
@@ -19,61 +43,38 @@ struct Index {
     .width('100%')
     .height('100%')
     .justifyContent(FlexAlign.Center)
+    .onClick(() => {
+      this.currentIndex = index;
+      this.tabsController.changeIndex(index);
+    })
   }
 
   build() {
-    Tabs({
-      barPosition: BarPosition.End,
-      controller: this.tabsController
-    }) {
-
-      // 智能助手
-      TabContent() {
-        Column() {
-          Text('智能助手')
-            .fontSize(20)
-            .fontWeight(FontWeight.Bold)
-            .margin({ top: 20 })
+    Column() {
+      Tabs({ barPosition: BarPosition.End, controller: this.tabsController }) {
+        TabContent() {
+          AssistantPage()
         }
-        .width('100%')
-        .height('100%')
-        .backgroundColor('#F5F5F5')
-      }
-      .tabBar(this.TabBuilder('智能助手', 2, $r('app.media.ai_normal'), $r('app.media.ai_selected')))
-
-      // 健康规划
-      TabContent() {
-        Column() {
-          Text('健康计划')
-            .fontSize(20)
-            .fontWeight(FontWeight.Bold)
-            .margin({ top: 20 })
+        .tabBar(this.TabBuilder('智能助手', 0, $r('app.media.icon'), $r('app.media.icon')))
+        
+        TabContent() {
+          HealthPlanPage()
         }
-        .width('100%')
-        .height('100%')
-        .backgroundColor('#F5F5F5')
-      }
-      .tabBar(this.TabBuilder('健康计划', 1, $r('app.media.health_normal'), $r('app.media.health_selected')))
-
-
-      // 我的
-      TabContent() {
-        Column() {
-          Text('我的')
-            .fontSize(20)
-            .fontWeight(FontWeight.Bold)
-            .margin({ top: 20 })
+        .tabBar(this.TabBuilder('健康计划', 1, $r('app.media.icon'), $r('app.media.icon')))
+        
+        TabContent() {
+          ProfilePage()
         }
-        .width('100%')
-        .height('100%')
-        .backgroundColor('#F5F5F5')
+        .tabBar(this.TabBuilder('个人中心', 2, $r('app.media.icon'), $r('app.media.icon')))
       }
-      .tabBar(this.TabBuilder('我的', 3, $r('app.media.profile_normal'), $r('app.media.profile_selected')))
+      .width('100%')
+      .height('100%')
+      .barHeight(60)
+      .onChange((index: number) => {
+        this.currentIndex = index;
+      })
     }
-    .scrollable(false)
-    .barHeight(60)
-    .onChange((index: number) => {
-      this.currentIndex = index;
-    })
+    .width('100%')
+    .height('100%')
   }
-} 
+}

@@ -1,147 +1,71 @@
-import http from '@ohos.net.http'
+import http from '@ohos.net.http';
+
+// 定义健康计划响应接口
+// 健康服务，用于生成健康计划和健康建议
 
 // 健康计划数据接口
 interface HealthPlanData {
-  diet: string
-  exercise: string
+  plan: string;
 }
 
-// 用户信息接口
-interface UserInfo {
-  username: string
-  email: string
-  avatar?: string
+interface HealthPlanResponse {
+  data: HealthPlanData;
 }
 
-// 运动历史记录接口
-interface ExerciseHistory {
-  date: string
-  exerciseType: string
-  duration: number
-}
-
-// 基础响应接口
-interface BaseResponse<T> {
-  code: number
-  message: string
-  data: T
-}
-
-export class HomeNetworkService {
-  private static instance: HomeNetworkService
-  private baseUrl: string = 'http://localhost:8000'
-
-  private constructor() {
-    console.info('[HomeNetworkService] 服务实例已初始化')
-  }
-
-  public static getInstance(): HomeNetworkService {
-    if (!HomeNetworkService.instance) {
-      console.info('[HomeNetworkService] 创建新的服务实例')
-      HomeNetworkService.instance = new HomeNetworkService()
-    }
-    return HomeNetworkService.instance
-  }
-
-  // 生成健康计划
-  async generateHealthPlan(): Promise<BaseResponse<{ plan: string }>> {
-    console.info('[HomeNetworkService] 开始生成健康计划')
-    let httpRequest = http.createHttp()
-    try {
-      let response = await httpRequest.request(
-        this.baseUrl + '/api/health/plan/generate',
-        {
-          method: http.RequestMethod.POST,
-          header: {
-            'Content-Type': 'application/json'
+class HomeNetworkService {
+  private baseUrl: string = 'https://your-api-endpoint.com/api';
+  
+  /**
+   * 生成健康计划
+   * @returns 返回健康计划数据
+   */
+  generateHealthPlan(): Promise<HealthPlanResponse> {
+    return new Promise((resolve) => {
+      console.info('[HomeNetworkService] 生成健康计划');
+      
+      // 模拟网络请求延迟
+      setTimeout(() => {
+        // 返回模拟数据
+        resolve({
+          data: {
+            plan: '1. 每天步行30分钟\n2. 每周进行3次力量训练\n3. 保持充足睡眠\n4. 均衡饮食，多摄入蔬果\n5. 每天喝足够的水'
           }
-        }
-      )
-      const result = JSON.parse(response.result as string)
-      console.info(`[HomeNetworkService] 生成计划响应状态码: ${result.code}`)
-      return result
-    } catch (error) {
-      console.error(`[HomeNetworkService] 生成计划请求发生错误: ${error}`)
-      throw error
-    } finally {
-      httpRequest.destroy()
-    }
+        });
+      }, 1500);
+    });
   }
-
-  // 获取指定日期的健康计划
-  async getHealthPlanByDay(day: number): Promise<BaseResponse<HealthPlanData>> {
-    console.info(`[HomeNetworkService] 开始获取第${day}天的健康计划`)
-    let httpRequest = http.createHttp()
-    try {
-      let response = await httpRequest.request(
-        this.baseUrl + `/api/health/plan/${day}`,
-        {
-          method: http.RequestMethod.GET,
-          header: {
-            'Content-Type': 'application/json'
-          }
+  
+  /**
+   * 获取健康建议
+   * @param type 建议类型：diet(饮食)、exercise(运动)、sleep(睡眠)
+   * @returns 返回健康建议
+   */
+  getHealthTips(type: string): Promise<string> {
+    return new Promise((resolve) => {
+      console.info(`[HomeNetworkService] 获取${type}健康建议`);
+      
+      // 模拟网络请求延迟
+      setTimeout(() => {
+        let tip = '';
+        
+        switch (type) {
+          case 'diet':
+            tip = '建议每天摄入足够的蛋白质和蔬菜，减少精制碳水化合物和糖分的摄入。多吃全谷物食品，保持饮食多样性。';
+            break;
+          case 'exercise':
+            tip = '每周进行至少150分钟的中等强度有氧运动，或75分钟的高强度有氧运动。同时，每周进行2次以上的肌肉强化训练。';
+            break;
+          case 'sleep':
+            tip = '保持规律的作息时间，每晚睡前避免使用电子设备，创造安静、舒适的睡眠环境。成年人每天应保证7-8小时的睡眠。';
+            break;
+          default:
+            tip = '保持健康的生活方式，包括均衡饮食、规律运动和充足睡眠，有助于提高生活质量和预防疾病。';
         }
-      )
-      const result = JSON.parse(response.result as string)
-      console.info(`[HomeNetworkService] 获取计划响应状态码: ${result.code}`)
-      return result
-    } catch (error) {
-      console.error(`[HomeNetworkService] 获取计划请求发生错误: ${error}`)
-      throw error
-    } finally {
-      httpRequest.destroy()
-    }
-  }
-
-  // 获取用户信息
-  async getUserInfo(): Promise<BaseResponse<UserInfo>> {
-    console.info('[HomeNetworkService] 开始获取用户信息')
-    let httpRequest = http.createHttp()
-    try {
-      let response = await httpRequest.request(
-        this.baseUrl + '/api/user/info',
-        {
-          method: http.RequestMethod.GET,
-          header: {
-            'Content-Type': 'application/json'
-          }
-        }
-      )
-      const result = JSON.parse(response.result as string)
-      console.info(`[HomeNetworkService] 获取用户信息响应状态码: ${result.code}`)
-      return result
-    } catch (error) {
-      console.error(`[HomeNetworkService] 获取用户信息请求发生错误: ${error}`)
-      throw error
-    } finally {
-      httpRequest.destroy()
-    }
-  }
-
-  // 获取运动历史
-  async getExerciseHistory(): Promise<BaseResponse<ExerciseHistory[]>> {
-    console.info('[HomeNetworkService] 开始获取运动历史')
-    let httpRequest = http.createHttp()
-    try {
-      let response = await httpRequest.request(
-        this.baseUrl + '/api/exercise/history',
-        {
-          method: http.RequestMethod.GET,
-          header: {
-            'Content-Type': 'application/json'
-          }
-        }
-      )
-      const result = JSON.parse(response.result as string)
-      console.info(`[HomeNetworkService] 获取运动历史响应状态码: ${result.code}`)
-      return result
-    } catch (error) {
-      console.error(`[HomeNetworkService] 获取运动历史请求发生错误: ${error}`)
-      throw error
-    } finally {
-      httpRequest.destroy()
-    }
+        
+        resolve(tip);
+      }, 1000);
+    });
   }
 }
 
-export default HomeNetworkService.getInstance() 
+export default new HomeNetworkService();
