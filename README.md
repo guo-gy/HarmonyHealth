@@ -6,7 +6,7 @@
 
 项目实训项目，仅作学习使用，不含盈利目的。
 
-联系方式：cn.ggy@qq.com
+联系方式：devguogy@gmail.com
 
 # 参与人员：
 
@@ -17,3 +17,6 @@
 1. 鸿蒙前端开发
 2. DeepSeek接口引用
 3. 待补充
+
+# 后端地址：
+https://github.com/guo-gy/health-django
