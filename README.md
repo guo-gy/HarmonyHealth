@@ -6,7 +6,7 @@
 
 项目实训项目，仅作学习使用，不含盈利目的。
 
-联系方式：cn.ggy@qq.com
+联系方式：devguogy@gmail.com
 
 # 参与人员：
 
@@ -18,8 +18,13 @@
 2. DeepSeek接口引用
 3. 待补充
 
+# 后端地址：
+https://github.com/guo-gy/health-django
+
 ## 注意
 
 使用的时候把url改成你本地的ipv4
 
 打开终端通过ipconfig获取
+
+
