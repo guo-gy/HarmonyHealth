@@ -75,6 +75,7 @@ struct RegisterPage {
           }
           //注册
           this.isLoading = true;
+          console.info('开始请求注册');
           const response = await NetworkService.register(this.user_id, this.password);
           console.info(`[RegisterPage] 注册响应: code=${response.code}, message=${response.message}`);
           //注册成功

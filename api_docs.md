@@ -93,7 +93,6 @@
 ## 通用说明
 
 1. **请求格式要求**：
-   - Content-Type: application/json
    - 请求体必须是合法的 JSON 格式
 
 2. **响应码说明**：

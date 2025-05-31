@@ -1,5 +1,5 @@
 import http from '@ohos.net.http';
-
+import {AppConfig} from "../common/config"
 class BaseResponse {
   code: number;
   message: string;
@@ -90,10 +90,9 @@ class RawRegisterResponse {
 
 class NetworkService {
   private static instance: NetworkService;
-  private baseUrl: string = 'http://localhost:8000';
-  private useMockData: boolean = true; // 添加标志来控制是否使用模拟数据
+  private baseUrl: string = AppConfig.API_BASE_URL;
+  private useMockData: boolean = AppConfig.USE_MOCK_DATA; // 添加标志来控制是否使用模拟数据
   private mockUsers: Map<string, string> = new Map(); // 存储模拟用户数据
-
   private constructor() {
     console.info('[NetworkService] 服务实例已初始化');
     // 添加默认用户
