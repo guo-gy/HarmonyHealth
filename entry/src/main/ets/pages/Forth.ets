@@ -59,7 +59,7 @@ struct Index {
   }
 
   clickNext() {
-    // 使用明确的类型而不是空对象字面量
+    // 使用明确的类型而不是空对象字面�?
     const params: FormData = {
       foodType: this.formData.foodType,
       mealTime: this.formData.mealTime,

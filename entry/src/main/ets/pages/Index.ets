@@ -32,17 +32,23 @@ struct Index {
   @Builder TabBuilder(title: string, index: number, normalImg: Resource, selectedImg: Resource) {
     Column() {
       Image(this.currentIndex === index ? selectedImg : normalImg)
-        .width(24)
-        .height(24)
+        .width(26)
+        .height(26)
+        .objectFit(ImageFit.Contain)
       
       Text(title)
         .fontSize(12)
-        .fontColor(this.currentIndex === index ? '#007DFF' : '#666666')
+        .fontWeight(this.currentIndex === index ? FontWeight.Medium : FontWeight.Normal)
+        .fontColor(this.currentIndex === index ? '#007DFF' : '#999999')
         .margin({ top: 4 })
     }
     .width('100%')
     .height('100%')
     .justifyContent(FlexAlign.Center)
+    .animation({
+      duration: 250,
+      curve: Curve.EaseOut
+    })
     .onClick(() => {
       this.currentIndex = index;
       this.tabsController.changeIndex(index);
@@ -55,26 +61,29 @@ struct Index {
         TabContent() {
           AssistantPage()
         }
-        .tabBar(this.TabBuilder('智能助手', 0, $r('app.media.icon'), $r('app.media.icon')))
+        .tabBar(this.TabBuilder('智能助手', 0, $r('app.media.assistant_normal'), $r('app.media.assistant_selected')))
         
         TabContent() {
           HealthPlanPage()
         }
-        .tabBar(this.TabBuilder('健康计划', 1, $r('app.media.icon'), $r('app.media.icon')))
+        .tabBar(this.TabBuilder('健康计划', 1, $r('app.media.plan_normal'), $r('app.media.plan_selected')))
         
         TabContent() {
           ProfilePage()
         }
-        .tabBar(this.TabBuilder('个人中心', 2, $r('app.media.icon'), $r('app.media.icon')))
+        .tabBar(this.TabBuilder('个人中心', 2, $r('app.media.profile_normal'), $r('app.media.profile_selected')))
       }
       .width('100%')
       .height('100%')
-      .barHeight(60)
+      .barHeight(70)
+      .barMode(BarMode.Fixed)
+      .backgroundColor('#FFFFFF')
       .onChange((index: number) => {
         this.currentIndex = index;
       })
     }
     .width('100%')
     .height('100%')
+    .backgroundColor('#F8F8F8')
   }
 }

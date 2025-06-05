@@ -9,6 +9,7 @@ interface PlanData {
   calories: number;
   water: number;
   completed: boolean;
+  workoutTime: number;  // 添加运动时间（分钟）
 }
 
 // 定义成就接口
@@ -17,6 +18,16 @@ interface Achievement {
   description: string;
   icon: Resource;
   unlocked: boolean;
+  progress?: number;  // 可选的进度值
+}
+
+// 定义每日计划项
+interface DailyPlanItem {
+  time: string;
+  title: string;
+  subtitle: string;
+  icon: Resource;
+  completed: boolean;
 }
 
 @Component
@@ -24,27 +35,68 @@ export struct HealthPlanPage {
   @State message: string = '健康计划';
   @State selectedDay: number = new Date().getDay() || 7; // 获取当前星期几，周日为0转为7
   @State selectedDate: Date = new Date();
-  @State planData: PlanData | null = null;
+  @State planData: PlanData | null = {
+    diet: "均衡饮食，少油少盐",
+    exercise: "有氧运动 + 力量训练",
+    steps: 8000,
+    calories: 350,
+    water: 2000,
+    completed: false,
+    workoutTime: 45
+  };
   @State isLoading: boolean = false;
-  @State completionRate: number = 0;
+  @State completionRate: number = 65;
   @State achievements: Achievement[] = [
     {
       title: '运动达人',
       description: '连续7天完成运动计划',
-      icon: $r('app.media.icon'),  // 将 default_avatar 替换为 icon
-      unlocked: true
+      icon: $r('app.media.badge_exercise'),
+      unlocked: true,
+      progress: 100
     },
     {
       title: '饮食均衡',
       description: '连续5天遵循健康饮食',
-      icon: $r('app.media.icon'),  // 将 default_avatar 替换为 icon
-      unlocked: false
+      icon: $r('app.media.badge_diet'),
+      unlocked: false,
+      progress: 60
     },
     {
       title: '水分充足',
       description: '连续3天达成饮水目标',
-      icon: $r('app.media.icon'),  // 将 default_avatar 替换为 icon
-      unlocked: true
+      icon: $r('app.media.badge_water'),
+      unlocked: true,
+      progress: 100
+    }
+  ];
+  @State dailyPlanItems: DailyPlanItem[] = [
+    {
+      time: '06:30',
+      title: '晨跑',
+      subtitle: '30分钟有氧运动',
+      icon: $r('app.media.morning_run'),
+      completed: true
+    },
+    {
+      time: '12:00',
+      title: '午餐',
+      subtitle: '高蛋白低脂饮食',
+      icon: $r('app.media.lunch'),
+      completed: true
+    },
+    {
+      time: '18:00',
+      title: '力量训练',
+      subtitle: '核心肌群训练',
+      icon: $r('app.media.strength'),
+      completed: false
+    },
+    {
+      time: '21:00',
+      title: '晚间拉伸',
+      subtitle: '改善睡眠质量',
+      icon: $r('app.media.stretching'),
+      completed: false
     }
   ];
 
@@ -57,11 +109,12 @@ export struct HealthPlanPage {
       Row() {
         Column() {
           Text(this.message)
-            .fontSize(28)
+            .fontSize(22)
             .fontWeight(FontWeight.Bold)
+            .fontColor('#333333')
           
           Text(`${this.months[this.selectedDate.getMonth()]} ${this.selectedDate.getDate()}, ${this.selectedDate.getFullYear()}`)
-            .fontSize(16)
+            .fontSize(14)
             .fontColor('#666666')
         }
         .alignItems(HorizontalAlign.Start)
@@ -70,196 +123,395 @@ export struct HealthPlanPage {
           .layoutWeight(1)
         
         Button() {
-          Image($r('app.media.icon'))  // 将 default_avatar 替换为 icon
+          Image($r('app.media.calendar_icon'))
             .width(24)
             .height(24)
         }
         .width(40)
         .height(40)
-        .backgroundColor('#F5F5F5')
+        .backgroundColor('#F0F0F0')
         .borderRadius(20)
-        .onClick(() => {
-          // 日历选择功能
-        })
       }
       .width('100%')
       .padding({ left: 20, right: 20, top: 20, bottom: 10 })
 
       // 周选择器
-      Row() {
-        ForEach(this.weekDays, (day: string, index: number) => {  // 添加明确的类型
+      Scroll() {
+        Row({ space: 8 }) {
+          ForEach(this.weekDays, (day: string, index: number) => {
           Column() {
             Text(day)
-              .fontSize(14)
-              .fontColor(this.selectedDay === index + 1 ? '#007DFF' : '#666666')
+                .fontSize(12)
+                .fontColor(this.selectedDay === index + 1 ? '#007DFF' : '#999999')
             
-            Text(`${index + 1}`)
-              .fontSize(18)
-              .fontWeight(FontWeight.Bold)
-              .fontColor(this.selectedDay === index + 1 ? '#007DFF' : '#000000')
-              .margin({ top: 5 })
-            
-            Circle({ width: 6, height: 6 })
-              .fill(this.selectedDay === index + 1 ? '#007DFF' : 'transparent')
-              .margin({ top: 5 })
+              Text(`${new Date(this.selectedDate.getTime() - ((this.selectedDate.getDay() || 7) - index - 1) * 86400000).getDate()}`)
+                .fontSize(20)
+                .fontWeight(this.selectedDay === index + 1 ? FontWeight.Bold : FontWeight.Normal)
+                .fontColor(this.selectedDay === index + 1 ? '#FFFFFF' : '#333333')
           }
-          .width(40)
+            .width(48)
           .height(70)
           .padding(5)
-          .borderRadius(20)
-          .backgroundColor(this.selectedDay === index + 1 ? '#E6F2FF' : 'transparent')
+            .borderRadius(24)
+            .backgroundColor(this.selectedDay === index + 1 ? '#007DFF' : 'transparent')
+            .justifyContent(FlexAlign.Center)
+            .animation({
+              duration: 250,
+              curve: Curve.EaseOut
+            })
           .onClick(() => {
             this.selectedDay = index + 1;
             // 计算选中日期
             const today = new Date();
             const diff = index + 1 - (today.getDay() || 7);
             this.selectedDate = new Date(today.getTime() + diff * 24 * 60 * 60 * 1000);
-            this.loadPlanData();
+            })
           })
-        })
+        }
       }
       .width('100%')
-      .justifyContent(FlexAlign.SpaceAround)
-      .padding({ left: 10, right: 10, top: 10, bottom: 20 })
+      .scrollable(ScrollDirection.Horizontal)
+      .scrollBar(BarState.Off)
+      .padding({ left: 20, right: 20, top: 10, bottom: 15 })
 
-      // 进度概览
+      // 今日计划内容
+      Scroll() {
+        Column({ space: 16 }) {
+          // 进度概览卡片
       Row() {
-        Column() {
-          Text('今日进度')
-            .fontSize(18)
+            Column({ space: 6 }) {
+              Row({ space: 8 }) {
+                Text('今日完成度')
+                  .fontSize(16)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor('#333333')
+                
+                Text(`${this.completionRate}%`)
+                  .fontSize(16)
             .fontWeight(FontWeight.Bold)
+                  .fontColor('#007DFF')
+              }
           
           Progress({ value: this.completionRate, total: 100 })
-            .color('#007DFF')
+                .color('#007DFF')
+                .backgroundColor('#EEEEEE')
+                .width('100%')
+                .height(8)
+                .borderRadius(4)
+            }
             .width('100%')
-            .height(10)
-            .margin({ top: 10, bottom: 5 })
-          
-          Text(`${this.completionRate}%`)
-            .fontSize(14)
-            .fontColor('#666666')
+            .padding(16)
         }
         .width('100%')
-      }
-      .width('90%')
-      .padding(15)
-      .backgroundColor('#F5F5F5')
-      .borderRadius(10)
+          .backgroundColor('#FFFFFF')
+          .borderRadius(16)
+          .shadow({ radius: 8, color: 'rgba(0, 0, 0, 0.05)', offsetX: 0, offsetY: 2 })
 
-      // 计划内容展示区域
-      if (this.isLoading) {
-        LoadingProgress()
-          .color('#007DFF')
-          .width(50)
-          .height(50)
-          .margin({ top: 50 })
-      } else if (this.planData) {
-        Scroll() {
+          // 数据概览卡片
+          if (this.planData) {
+            Column({ space: 16 }) {
+              Text('今日数据')
+                .fontSize(16)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#333333')
+                .alignSelf(ItemAlign.Start)
+              
+              Row({ space: 16 }) {
+                // 步数卡片
           Column() {
-            // 数据概览卡片
             Row() {
-              Column() {
+                    Image($r('app.media.steps_icon'))
+                      .width(24)
+                      .height(24)
+                      .margin({ right: 8 })
+                    
                 Text('步数')
                   .fontSize(14)
                   .fontColor('#666666')
+                  }
+                  .alignItems(VerticalAlign.Center)
                 
                 Text(`${this.planData.steps}`)
-                  .fontSize(20)
+                    .fontSize(24)
                   .fontWeight(FontWeight.Bold)
+                    .fontColor('#333333')
+                    .margin({ top: 8 })
+                  
+                  Text('目标 10000')
+                    .fontSize(12)
+                    .fontColor('#999999')
+                    .margin({ top: 4 })
+                }
+                .layoutWeight(1)
+                .height(100)
+                .backgroundColor('#FFFFFF')
+                .borderRadius(16)
+                .padding(12)
+                .justifyContent(FlexAlign.Center)
+                .shadow({ radius: 4, color: 'rgba(0, 0, 0, 0.05)', offsetX: 0, offsetY: 2 })
                 
-                Image($r('app.media.icon'))  // 修改这里，将 default_avatar 替换为 icon
+                // 卡路里卡片
+                Column() {
+                  Row() {
+                    Image($r('app.media.calories_icon'))
                   .width(24)
                   .height(24)
-                  .margin({ top: 5 })
+                      .margin({ right: 8 })
+                    
+                    Text('卡路里')
+                      .fontSize(14)
+                      .fontColor('#666666')
               }
-              .alignItems(HorizontalAlign.Center)
-              .layoutWeight(1)
+                  .alignItems(VerticalAlign.Center)
+                  
+                  Text(`${this.planData.calories}`)
+                    .fontSize(24)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor('#333333')
+                    .margin({ top: 8 })
+                  
+                  Text('千卡')
+                    .fontSize(12)
+                    .fontColor('#999999')
+                    .margin({ top: 4 })
+                }
+                .layoutWeight(1)
+                .height(100)
+                .backgroundColor('#FFFFFF')
+                .borderRadius(16)
+                .padding(12)
+                .justifyContent(FlexAlign.Center)
+                .shadow({ radius: 4, color: 'rgba(0, 0, 0, 0.05)', offsetX: 0, offsetY: 2 })
+              }
               
-              Divider()
-                .vertical(true)
-                .height('80%')
-                .color('#E0E0E0')
-              
-              Column() {
-                Text('卡路里')
+              Row({ space: 16 }) {
+                // 运动时间卡片
+                Column() {
+                  Row() {
+                    Image($r('app.media.time_icon'))
+                      .width(24)
+                      .height(24)
+                      .margin({ right: 8 })
+                    
+                    Text('运动时间')
                   .fontSize(14)
                   .fontColor('#666666')
+                  }
+                  .alignItems(VerticalAlign.Center)
                 
-                Text(`${this.planData.calories}`)
-                  .fontSize(20)
+                  Text(`${this.planData.workoutTime}`)
+                    .fontSize(24)
                   .fontWeight(FontWeight.Bold)
+                    .fontColor('#333333')
+                    .margin({ top: 8 })
+                  
+                  Text('分钟')
+                    .fontSize(12)
+                    .fontColor('#999999')
+                    .margin({ top: 4 })
+                }
+                .layoutWeight(1)
+                .height(100)
+                .backgroundColor('#FFFFFF')
+                .borderRadius(16)
+                .padding(12)
+                .justifyContent(FlexAlign.Center)
+                .shadow({ radius: 4, color: 'rgba(0, 0, 0, 0.05)', offsetX: 0, offsetY: 2 })
                 
-                Image($r('app.media.icon'))  // 修改这里，将 default_avatar 替换为 icon
+                // 饮水量卡片
+                Column() {
+                  Row() {
+                    Image($r('app.media.water_icon'))
                   .width(24)
                   .height(24)
-                  .margin({ top: 5 })
+                      .margin({ right: 8 })
+                    
+                    Text('饮水量')
+                      .fontSize(14)
+                      .fontColor('#666666')
               }
-              .alignItems(HorizontalAlign.Center)
-              .layoutWeight(1)
-              
-              Divider()
-                .vertical(true)
-                .height('80%')
-                .color('#E0E0E0')
-              
-              Column() {
-                Text('饮水量')
-                  .fontSize(14)
-                  .fontColor('#666666')
-                
-                Text(`${this.planData.water}ml`)
-                  .fontSize(20)
-                  .fontWeight(FontWeight.Bold)
-                
-                Image($r('app.media.icon'))  // 修改这里，将 default_avatar 替换为 icon
-                  .width(24)
-                  .height(24)
-                  .margin({ top: 5 })
+                  .alignItems(VerticalAlign.Center)
+                  
+                  Text(`${this.planData.water}`)
+                    .fontSize(24)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor('#333333')
+                    .margin({ top: 8 })
+                  
+                  Text('毫升')
+                    .fontSize(12)
+                    .fontColor('#999999')
+                    .margin({ top: 4 })
+                }
+                .layoutWeight(1)
+                .height(100)
+                .backgroundColor('#FFFFFF')
+                .borderRadius(16)
+                .padding(12)
+                .justifyContent(FlexAlign.Center)
+                .shadow({ radius: 4, color: 'rgba(0, 0, 0, 0.05)', offsetX: 0, offsetY: 2 })
               }
-              .alignItems(HorizontalAlign.Center)
-              .layoutWeight(1)
             }
             .width('100%')
-            .height(100)
-            .padding(15)
-            .backgroundColor('#F5F5F5')
-            .borderRadius(10)
-            .margin({ top: 15 })
-            .onClick((event: ClickEvent) => {  // 已修改，使用明确的 ClickEvent 类型
-              // 点击事件处理逻辑
-            })
+            .padding(16)
+            .backgroundColor('#FFFFFF')
+            .borderRadius(16)
+            .shadow({ radius: 8, color: 'rgba(0, 0, 0, 0.05)', offsetX: 0, offsetY: 2 })
           }
-          .width('90%')
-        }
-        .width('100%')
-        .layoutWeight(1)
-      } else {
-        Column() {
-          Image($r('app.media.icon'))  // 修改这里，将 default_avatar 替换为 icon
-            .width(150)
-            .height(150)
-            .margin({ top: 50, bottom: 20 })
           
-          Text('暂无计划数据')
-            .fontSize(18)
-            .fontColor('#666666')
-          
-          Button('创建计划')
-            .width(150)
-            .height(40)
-            .backgroundColor('#007DFF')
-            .margin({ top: 20 })
-            .onClick(() => {
-              this.createDefaultPlan();
+          // 每日计划项
+          Column({ space: 8 }) {
+            Text('今日计划')
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#333333')
+              .alignSelf(ItemAlign.Start)
+              .margin({ bottom: 8 })
+            
+            ForEach(this.dailyPlanItems, (item: DailyPlanItem) => {
+              Row() {
+                Text(item.time)
+                  .fontSize(14)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor('#666666')
+                  .width(60)
+                
+                Column() {
+                  Row({ space: 8 }) {
+                    Image(item.icon)
+                      .width(40)
+                      .height(40)
+                      .borderRadius(8)
+                    
+                    Column() {
+                      Text(item.title)
+                        .fontSize(16)
+                        .fontWeight(FontWeight.Medium)
+                        .fontColor('#333333')
+                      
+                      Text(item.subtitle)
+                        .fontSize(14)
+                        .fontColor('#666666')
+                    }
+                    .alignItems(HorizontalAlign.Start)
+                    .layoutWeight(1)
+                  }
+                }
+                .backgroundColor('#FFFFFF')
+                .borderRadius(12)
+                .padding({ left: 12, right: 12, top: 10, bottom: 10 })
+                .layoutWeight(1)
+                
+                Toggle({ type: ToggleType.Checkbox, isOn: item.completed })
+                  .selectedColor('#007DFF')
+                  .width(24)
+                  .height(24)
+                  .margin({ left: 8 })
+            }
+            .width('100%')
+              .alignItems(VerticalAlign.Center)
+              .onClick(() => {
+                item.completed = !item.completed;
+            })
             })
         }
         .width('100%')
-        .layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
+          .padding(16)
+          .backgroundColor('#FFFFFF')
+          .borderRadius(16)
+          .shadow({ radius: 8, color: 'rgba(0, 0, 0, 0.05)', offsetX: 0, offsetY: 2 })
+          
+          // 成就
+          Column({ space: 12 }) {
+            Text('我的成就')
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#333333')
+              .alignSelf(ItemAlign.Start)
+              .margin({ bottom: 8 })
+            
+            ForEach(this.achievements, (achievement: Achievement) => {
+              Row() {
+                Image(achievement.icon)
+                  .width(50)
+                  .height(50)
+                  .borderRadius(25)
+                  .opacity(achievement.unlocked ? 1 : 0.5)
+                
+                Column() {
+                  Row() {
+                    Text(achievement.title)
+                      .fontSize(16)
+                      .fontWeight(FontWeight.Medium)
+                      .fontColor(achievement.unlocked ? '#333333' : '#999999')
+                    
+                    if (achievement.unlocked) {
+                      Image($r('app.media.check_icon'))
+                        .width(16)
+                        .height(16)
+                        .margin({ left: 8 })
+                    }
+                  }
+          
+                  Text(achievement.description)
+                    .fontSize(14)
+            .fontColor('#666666')
+                    .margin({ top: 4 })
+                  
+                  if (achievement.progress !== undefined) {
+                    Row() {
+                      Progress({ value: achievement.progress, total: 100 })
+                        .color('#007DFF')
+                        .backgroundColor('#EEEEEE')
+                        .height(4)
+                        .borderRadius(2)
+                        .layoutWeight(1)
+                      
+                      Text(`${achievement.progress}%`)
+                        .fontSize(12)
+                        .fontColor('#666666')
+                        .margin({ left: 8 })
+                    }
+                    .width('100%')
+                    .margin({ top: 8 })
+                  }
+                }
+                .layoutWeight(1)
+                .alignItems(HorizontalAlign.Start)
+                .margin({ left: 12 })
+              }
+              .width('100%')
+              .padding(12)
+              .backgroundColor('#FFFFFF')
+              .borderRadius(12)
+              .shadow({ radius: 4, color: 'rgba(0, 0, 0, 0.02)', offsetX: 0, offsetY: 1 })
+            })
+            
+            Button('查看全部成就')
+        .width('100%')
+              .height(44)
+              .borderRadius(22)
+              .backgroundColor('#007DFF')
+              .fontColor(Color.White)
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ top: 12 })
+          }
+          .width('100%')
+          .padding(16)
+          .backgroundColor('#FFFFFF')
+          .borderRadius(16)
+          .shadow({ radius: 8, color: 'rgba(0, 0, 0, 0.05)', offsetX: 0, offsetY: 2 })
+        }
+        .width('90%')
       }
+      .layoutWeight(1)
+      .scrollBar(BarState.Off)
     }
     .width('100%')
     .height('100%')
+    .backgroundColor('#F8F8F8')
+    .padding({ bottom: 16 })
   }
 
   updateCompletionRate() {
@@ -274,7 +526,8 @@ export struct HealthPlanPage {
       steps: 8000,
       calories: 350,
       water: 2000,
-      completed: false
+      completed: false,
+      workoutTime: 45
     };
     this.updateCompletionRate();
   }
@@ -291,7 +544,8 @@ export struct HealthPlanPage {
           steps: 8000,
           calories: 350,
           water: 2000,
-          completed: this.selectedDay < new Date().getDay()
+          completed: this.selectedDay < new Date().getDay(),
+          workoutTime: 45
         };
       } else if (this.selectedDay === 2 || this.selectedDay === 4) {
         this.planData = {
@@ -300,7 +554,8 @@ export struct HealthPlanPage {
           steps: 6000,
           calories: 280,
           water: 2200,
-          completed: this.selectedDay < new Date().getDay()
+          completed: this.selectedDay < new Date().getDay(),
+          workoutTime: 45
         };
       } else {
         this.planData = {
@@ -309,7 +564,8 @@ export struct HealthPlanPage {
           steps: 5000,
           calories: 200,
           water: 2500,
-          completed: this.selectedDay < new Date().getDay()
+          completed: this.selectedDay < new Date().getDay(),
+          workoutTime: 45
         };
       }
       

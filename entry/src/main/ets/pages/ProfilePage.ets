@@ -10,6 +10,9 @@ interface UserInfo {
   age: number;
   bmi: number;
   goal: string;
+  level: number;
+  experience: number;
+  nextLevelExp: number;
 }
 
 // 定义健康指标接口
@@ -26,22 +29,57 @@ interface SelectOption {
   value: string;
 }
 
+// 定义运动记录接口
+interface WorkoutRecord {
+  type: string;
+  duration: number;
+  calories: number;
+  date: string;
+  icon: Resource;
+}
+
 @Component
 export struct ProfilePage {
   @State message: string = '个人中心';
   @State userInfo: UserInfo = {
     username: 'admin',
-    avatar: $r('app.media.icon'),
+    avatar: $r('app.media.user_avatar'),
     height: 175,
     weight: 68,
     age: 28,
     bmi: 22.2,
-    goal: '增肌减脂，提高体能'
+    goal: '增肌减脂，提高体能',
+    level: 12,
+    experience: 345,
+    nextLevelExp: 500
   };
   @State healthMetrics: HealthMetric[] = [];
   @State isLoading: boolean = false;
   @State selectedMetric: string = '体重';
   @State showHealthReport: boolean = false;
+  @State workoutRecords: WorkoutRecord[] = [
+    {
+      type: '有氧跑步', 
+      duration: 45, 
+      calories: 320, 
+      date: '今天 08:30', 
+      icon: $r('app.media.running_icon')
+    },
+    {
+      type: '力量训练', 
+      duration: 60, 
+      calories: 280, 
+      date: '昨天 17:15', 
+      icon: $r('app.media.strength_icon')
+    },
+    {
+      type: '户外骑行', 
+      duration: 90, 
+      calories: 450, 
+      date: '昨天 10:00', 
+      icon: $r('app.media.cycling_icon')
+    }
+  ];
 
   private metricOptions: SelectOption[] = [
     { value: '体重' },
@@ -137,20 +175,21 @@ export struct ProfilePage {
       // 顶部标题
       Row() {
         Text(this.message)
-          .fontSize(28)
+          .fontSize(22)
           .fontWeight(FontWeight.Bold)
+          .fontColor('#333333')
         
         Blank()
           .layoutWeight(1)
         
         Button() {
-          Image($r('app.media.icon'))
+          Image($r('app.media.settings_icon'))
             .width(24)
             .height(24)
         }
         .width(40)
         .height(40)
-        .backgroundColor('#F5F5F5')
+        .backgroundColor('#F0F0F0')
         .borderRadius(20)
         .onClick(() => {
           // 打开设置页面
@@ -164,7 +203,11 @@ export struct ProfilePage {
       .width('100%')
       .padding({ left: 20, right: 20, top: 20, bottom: 10 })
 
+      Scroll() {
+        Column({ space: 16 }) {
       // 用户信息卡片
+          Column() {
+            Row() {
       Column() {
         Row() {
           Image(this.userInfo.avatar)
@@ -176,224 +219,381 @@ export struct ProfilePage {
             Text(this.userInfo.username)
               .fontSize(20)
               .fontWeight(FontWeight.Bold)
+                      .fontColor('#333333')
             
             Text(`目标: ${this.userInfo.goal}`)
               .fontSize(14)
               .fontColor('#666666')
               .margin({ top: 5 })
+                    
+                    // 用户等级进度条
+                    Row() {
+                      Text(`LV.${this.userInfo.level}`)
+                        .fontSize(12)
+                        .fontColor('#007DFF')
+                        .fontWeight(FontWeight.Medium)
+                      
+                      Row() {
+                        Progress({ value: this.userInfo.experience, total: this.userInfo.nextLevelExp })
+                          .color('#007DFF')
+                          .backgroundColor('#EEEEEE')
+                          .height(6)
+                          .width('100%')
+                          .borderRadius(3)
+                      }
+                      .layoutWeight(1)
+                      .margin({ left: 8, right: 8 })
+                      
+                      Text(`${this.userInfo.experience}/${this.userInfo.nextLevelExp}`)
+                        .fontSize(12)
+                        .fontColor('#999999')
+                    }
+                    .width('100%')
+                    .alignItems(VerticalAlign.Center)
+                    .margin({ top: 6 })
           }
           .alignItems(HorizontalAlign.Start)
           .margin({ left: 15 })
           .layoutWeight(1)
+                }
+                .width('100%')
           
-          Button('编辑')
-            .width(80)
-            .height(36)
-            .backgroundColor('#007DFF')
-            .borderRadius(18)
-            .fontSize(14)
+                Button('编辑资料')
+                  .width('100%')
+                  .height(44)
+                  .borderRadius(22)
+                  .backgroundColor('#007DFF')
+                  .fontColor(Color.White)
+                  .fontSize(16)
+                  .fontWeight(FontWeight.Medium)
+                  .margin({ top: 16 })
             .onClick(() => {
               // 编辑个人信息
               promptAction.showDialog({
                 title: '编辑个人信息',
                 message: '编辑功能正在开发中',
-                buttons: [{ text: '确定', color: '#007DFF' }]
+                      buttons: [{ text: '确定', color: '#007DFF' }]
               });
             })
+              }
+              .layoutWeight(1)
         }
         .width('100%')
-        .padding({ top: 20, bottom: 20 })
+            .padding(20)
         
         Divider()
           .width('100%')
-          .color('#E0E0E0')
+              .color('#EEEEEE')
+              .strokeWidth(1)
         
         // 身体数据
-        Row() {
+            Grid() {
+              // 身高卡片
+              GridItem() {
           Column() {
             Text('身高')
               .fontSize(14)
               .fontColor('#666666')
             
-            Text(`${this.userInfo.height}cm`)
-              .fontSize(18)
+                  Row() {
+                    Text(`${this.userInfo.height}`)
+                      .fontSize(22)
               .fontWeight(FontWeight.Bold)
-              .margin({ top: 5 })
+                      .fontColor('#333333')
+                      
+                    Text('cm')
+                      .fontSize(14)
+                      .fontColor('#999999')
+                      .margin({ left: 4, bottom: 2 })
+                      .alignSelf(ItemAlign.End)
+                  }
           }
-          .layoutWeight(1)
+                .width('100%')
+                .height('100%')
+                .justifyContent(FlexAlign.Center)
           .alignItems(HorizontalAlign.Center)
+              }
+              .rowStart(0)
+              .rowEnd(0)
+              .columnStart(0)
+              .columnEnd(0)
           
-          Divider()
-            .vertical(true)
-            .height('60%')
-            .color('#E0E0E0')
-          
+              // 体重卡片
+              GridItem() {
           Column() {
             Text('体重')
               .fontSize(14)
               .fontColor('#666666')
             
-            Text(`${this.userInfo.weight}kg`)
-              .fontSize(18)
+                  Row() {
+                    Text(`${this.userInfo.weight}`)
+                      .fontSize(22)
               .fontWeight(FontWeight.Bold)
-              .margin({ top: 5 })
+                      .fontColor('#333333')
+                      
+                    Text('kg')
+                      .fontSize(14)
+                      .fontColor('#999999')
+                      .margin({ left: 4, bottom: 2 })
+                      .alignSelf(ItemAlign.End)
+                  }
           }
-          .layoutWeight(1)
+                .width('100%')
+                .height('100%')
+                .justifyContent(FlexAlign.Center)
           .alignItems(HorizontalAlign.Center)
+              }
+              .rowStart(0)
+              .rowEnd(0)
+              .columnStart(1)
+              .columnEnd(1)
           
-          Divider()
-            .vertical(true)
-            .height('60%')
-            .color('#E0E0E0')
-          
+              // BMI卡片
+              GridItem() {
           Column() {
             Text('BMI')
               .fontSize(14)
               .fontColor('#666666')
             
-            Text(`${this.userInfo.bmi.toFixed(1)}`)
-              .fontSize(18)
+                  Text(`${this.userInfo.bmi}`)
+                    .fontSize(22)
               .fontWeight(FontWeight.Bold)
-              .margin({ top: 5 })
+                    .fontColor('#333333')
           }
-          .layoutWeight(1)
+                .width('100%')
+                .height('100%')
+                .justifyContent(FlexAlign.Center)
           .alignItems(HorizontalAlign.Center)
+              }
+              .rowStart(0)
+              .rowEnd(0)
+              .columnStart(2)
+              .columnEnd(2)
           
-          Divider()
-            .vertical(true)
-            .height('60%')
-            .color('#E0E0E0')
-          
+              // 年龄卡片
+              GridItem() {
           Column() {
             Text('年龄')
               .fontSize(14)
               .fontColor('#666666')
             
-            Text(`${this.userInfo.age}岁`)
-              .fontSize(18)
+                  Row() {
+                    Text(`${this.userInfo.age}`)
+                      .fontSize(22)
               .fontWeight(FontWeight.Bold)
-              .margin({ top: 5 })
+                      .fontColor('#333333')
+                      
+                    Text('岁')
+                      .fontSize(14)
+                      .fontColor('#999999')
+                      .margin({ left: 4, bottom: 2 })
+                      .alignSelf(ItemAlign.End)
+                  }
           }
-          .layoutWeight(1)
+                .width('100%')
+                .height('100%')
+                .justifyContent(FlexAlign.Center)
           .alignItems(HorizontalAlign.Center)
         }
+              .rowStart(0)
+              .rowEnd(0)
+              .columnStart(3)
+              .columnEnd(3)
+            }
+            .columnsTemplate('1fr 1fr 1fr 1fr')
+            .rowsTemplate('80vp')
         .width('100%')
-        .padding({ top: 15, bottom: 15 })
+            .height(80)
       }
       .width('90%')
-      .padding({ left: 15, right: 15 })
-      .backgroundColor('#F5F5F5')
-      .borderRadius(10)
-      .margin({ top: 10 })
+          .backgroundColor('#FFFFFF')
+          .borderRadius(16)
+          .shadow({ radius: 8, color: 'rgba(0, 0, 0, 0.05)', offsetX: 0, offsetY: 2 })
 
-      // 健康数据可视化
+          // 健康数据趋势卡片
       Column() {
         Row() {
-          Text('健康数据趋势')
-            .fontSize(18)
+              Text('健康趋势')
+                .fontSize(16)
             .fontWeight(FontWeight.Bold)
+                .fontColor('#333333')
           
           Blank()
             .layoutWeight(1)
           
-          Select(this.metricOptions)
-            .selected(0)
-            .value(this.selectedMetric)
-            .font({ size: 14 })
-            .selectedOptionFont({ size: 14 })
-            .optionFont({ size: 14 })
-            .onSelect((index: number, value: string) => {
-              this.selectedMetric = value;
+              Row() {
+                ForEach(this.metricOptions, (item: SelectOption) => {
+                  Text(item.value)
+                    .fontSize(14)
+                    .fontColor(this.selectedMetric === item.value ? '#007DFF' : '#999999')
+                    .fontWeight(this.selectedMetric === item.value ? FontWeight.Medium : FontWeight.Normal)
+                    .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+                    .borderRadius(12)
+                    .backgroundColor(this.selectedMetric === item.value ? 'rgba(0, 125, 255, 0.1)' : 'transparent')
+                    .margin({ right: 8 })
+                    .onClick(() => {
+                      this.selectedMetric = item.value;
             })
+                })
+              }
         }
         .width('100%')
-        .padding({ top: 15, bottom: 15 })
+            .padding({ top: 16, bottom: 16, left: 16, right: 16 })
         
         if (this.isLoading) {
           LoadingProgress()
-            .color('#007DFF')
+                .color('#007DFF')
             .width(50)
             .height(50)
-            .margin({ top: 30, bottom: 30 })
+                .margin({ top: 20, bottom: 20 })
         } else {
-          // 数据可视化图表
-          Column() {
-            // 简单的柱状图实现
+              Row() {
+                ForEach(this.healthMetrics, (item: HealthMetric) => {
+                  this.ChartColumnBuilder(item)
+                })
+              }
+              .width('100%')
+              .height(200)
+              .padding({ left: 16, right: 16, bottom: 16 })
+            }
+          }
+          .width('90%')
+          .backgroundColor('#FFFFFF')
+          .borderRadius(16)
+          .shadow({ radius: 8, color: 'rgba(0, 0, 0, 0.05)', offsetX: 0, offsetY: 2 })
+          
+          // 运动记录卡片
+          Column({ space: 8 }) {
             Row() {
-              ForEach(this.healthMetrics, (item: HealthMetric) => {
-                // 直接使用 @Builder 方法作为组件
-                this.ChartColumnBuilder(item)
-              }, (item: HealthMetric) => item.date)
+              Text('最近运动')
+                .fontSize(16)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#333333')
+              
+              Blank()
+                .layoutWeight(1)
+              
+              Row() {
+                Text('查看全部')
+                  .fontSize(14)
+                  .fontColor('#007DFF')
+                
+                Image($r('app.media.arrow_right'))
+                  .width(16)
+                  .height(16)
+                  .margin({ left: 4 })
+              }
+              .backgroundColor('transparent')
+              .height(32)
             }
             .width('100%')
-            .height(250)
-            .padding({ left: 10, right: 10 })
+            .padding({ top: 16, left: 16, right: 16 })
+            
+            ForEach(this.workoutRecords, (record: WorkoutRecord) => {
+              Row() {
+                Image(record.icon)
+                  .width(50)
+                  .height(50)
+                  .borderRadius(25)
+                
+                Column() {
+                  Text(record.type)
+                    .fontSize(16)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor('#333333')
+                  
+                  Row() {
+                    Text(`${record.duration}分钟`)
+                      .fontSize(14)
+                      .fontColor('#999999')
+                    
+                    Text('·')
+                      .fontSize(14)
+                      .fontColor('#999999')
+                      .margin({ left: 6, right: 6 })
+                    
+                    Text(`${record.calories}千卡`)
+                      .fontSize(14)
+                      .fontColor('#999999')
+                  }
+                  .margin({ top: 4 })
+                }
+                .layoutWeight(1)
+                .alignItems(HorizontalAlign.Start)
+                .margin({ left: 12 })
+                
+                Column() {
+                  Text(record.date)
+                    .fontSize(14)
+                    .fontColor('#999999')
+                  
+                  Image($r('app.media.detail_icon'))
+                    .width(24)
+                    .height(24)
+                    .margin({ top: 4 })
+                }
+                .alignItems(HorizontalAlign.End)
           }
           .width('100%')
-        }
+              .padding(16)
+              .backgroundColor('#FFFFFF')
+              .borderRadius(12)
+            })
+            
+            Button('开始新的运动')
+              .width('100%')
+              .height(44)
+              .borderRadius(22)
+              .backgroundColor('#007DFF')
+              .fontColor(Color.White)
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .margin({ top: 4, bottom: 16, left: 16, right: 16 })
       }
       .width('90%')
-      .padding({ left: 15, right: 15 })
-      .backgroundColor('#F5F5F5')
-      .borderRadius(10)
-      .margin({ top: 15 })
+          .backgroundColor('#FFFFFF')
+          .borderRadius(16)
+          .shadow({ radius: 8, color: 'rgba(0, 0, 0, 0.05)', offsetX: 0, offsetY: 2 })
 
-      // 健康报告和设备绑定
+          // 健康报告按钮
+          Button() {
       Row() {
-        Column() {
-          Image($r('app.media.icon'))
-            .width(40)
-            .height(40)
-            .margin({ bottom: 10 })
+              Image($r('app.media.report_icon'))
+                .width(24)
+                .height(24)
+                .margin({ right: 8 })
           
-          Text('健康报告')
+              Text('生成健康报告')
             .fontSize(16)
-            .fontWeight(FontWeight.Bold)
+                .fontWeight(FontWeight.Medium)
+                .fontColor('#333333')
         }
-        .width('45%')
-        .height(120)
-        .backgroundColor('#F5F5F5')
-        .borderRadius(10)
+            .width('100%')
+            .height('100%')
         .justifyContent(FlexAlign.Center)
-        .alignItems(HorizontalAlign.Center)
+          }
+          .width('90%')
+          .height(56)
+          .backgroundColor('#FFFFFF')
+          .borderRadius(16)
+          .shadow({ radius: 8, color: 'rgba(0, 0, 0, 0.05)', offsetX: 0, offsetY: 2 })
         .onClick(() => {
           this.showHealthReport = true;
           promptAction.showDialog({
             title: '健康报告',
-            message: '您的健康状况良好，建议继续保持当前的运动和饮食习惯。',
-            buttons: [{ text: '确定', color: '#007DFF' }]
+              message: '您的健康报告正在生成中',
+              buttons: [{ text: '确定', color: '#007DFF' }]
           });
         })
-        
-        Column() {
-          Image($r('app.media.icon'))
-            .width(40)
-            .height(40)
-            .margin({ bottom: 10 })
-          
-          Text('设备绑定')
-            .fontSize(16)
-            .fontWeight(FontWeight.Bold)
         }
-        .width('45%')
-        .height(120)
-        .backgroundColor('#F5F5F5')
-        .borderRadius(10)
-        .justifyContent(FlexAlign.Center)
-        .alignItems(HorizontalAlign.Center)
-        .onClick(() => {
-          promptAction.showDialog({
-            title: '设备绑定',
-            message: '设备绑定功能正在开发中',
-            buttons: [{ text: '确定', color: '#007DFF' }]
-          });
-        })
+        .width('100%')
       }
-      .width('90%')
-      .justifyContent(FlexAlign.SpaceBetween)
-      .margin({ top: 15, bottom: 20 })
+      .layoutWeight(1)
+      .scrollBar(BarState.Off)
     }
     .width('100%')
     .height('100%')
+    .backgroundColor('#F8F8F8')
+    .padding({ bottom: 16 })
   }
 }
