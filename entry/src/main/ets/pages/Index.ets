@@ -2,6 +2,7 @@ import router from '@ohos.router';
 import { AssistantPage } from './AssistantPage';
 import { HealthPlanPage } from './HealthPlanPage';
 import { ProfilePage } from './ProfilePage';
+import { WorkoutPage } from './WorkoutPage';
 
 // 在文件顶部添加接口定义
 interface FormData {
@@ -62,11 +63,16 @@ struct Index {
           HealthPlanPage()
         }
         .tabBar(this.TabBuilder('健康计划', 1, $r('app.media.health_normal')))
+
+        TabContent() {
+          WorkoutPage()
+        }
+        .tabBar(this.TabBuilder('运动轨迹', 2, $r('app.media.workout_normal')))
         
         TabContent() {
           ProfilePage()
         }
-        .tabBar(this.TabBuilder('个人中心', 2, $r('app.media.home_normal')))
+        .tabBar(this.TabBuilder('个人中心', 3, $r('app.media.home_normal')))
       }
       .width('100%')
       .height('100%')
