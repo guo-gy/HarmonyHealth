@@ -71,7 +71,7 @@ struct WelcomeIndex {
   build() {
     Stack({ alignContent: Alignment.Center }) {
       // 背景图层
-      Column() {
+    Column() {
         Image($r('app.media.welcome_bg'))
           .width('100%')
           .height('100%')
@@ -81,8 +81,8 @@ struct WelcomeIndex {
       .height('100%')
       
       // 内容图层
-      Swiper(this.swiperController) {
-        ForEach(this.welcomeData, (item: WelcomeItem, index: number) => {
+        Swiper(this.swiperController) {
+          ForEach(this.welcomeData, (item: WelcomeItem, index: number) => {
           Column() {
             // 标题和描述
             Column() {
@@ -115,16 +115,16 @@ struct WelcomeIndex {
                 iterations: 1,
                 playMode: PlayMode.Normal
               })
-          }
-          .width('100%')
-          .height('100%')
+            }
+            .width('100%')
+            .height('100%')
           .justifyContent(FlexAlign.Center)
-          .alignItems(HorizontalAlign.Center)
-        })
-      }
-      .index(this.currentIndex)
-      .autoPlay(false)
-      .indicator(true)
+            .alignItems(HorizontalAlign.Center)
+          })
+        }
+        .index(this.currentIndex)
+        .autoPlay(false)
+        .indicator(true)
       .indicatorStyle({
         selectedColor: '#007DFF',
         color: 'rgba(255, 255, 255, 0.6)',
@@ -132,65 +132,65 @@ struct WelcomeIndex {
         right: 0,
         bottom: 160
       })
-      .loop(false)
-      .onChange((index: number) => {
-        this.currentIndex = index;
+        .loop(false)
+        .onChange((index: number) => {
+          this.currentIndex = index;
         animateTo({
           duration: 300,
           curve: Curve.EaseInOut
         }, () => {
           // 动画效果
         })
-      })
-      .width('100%')
-      .height('100%')
-      
-      // 底部按钮
-      Column() {
-        if (this.currentIndex === this.welcomeData.length - 1) {
-          Button('开始使用')
-            .width('80%')
+        })
+        .width('100%')
+        .height('100%')
+        
+        // 底部按钮
+        Column() {
+          if (this.currentIndex === this.welcomeData.length - 1) {
+            Button('开始使用')
+              .width('80%')
             .height(56)
-            .backgroundColor('#007DFF')
+              .backgroundColor('#007DFF')
             .borderRadius(28)
-            .fontSize(18)
+              .fontSize(18)
             .fontWeight(FontWeight.Medium)
-            .fontColor(Color.White)
+              .fontColor(Color.White)
             .shadow({ radius: 8, color: 'rgba(0, 125, 255, 0.3)', offsetX: 0, offsetY: 4 })
-            .onClick(() => {
-              this.showPrivacyDialog = true;
-              this.dialogController.open();
-            })
-        } else {
-          Button('下一步')
-            .width('80%')
+              .onClick(() => {
+                this.showPrivacyDialog = true;
+                this.dialogController.open();
+              })
+          } else {
+            Button('下一步')
+              .width('80%')
             .height(56)
-            .backgroundColor('#007DFF')
+              .backgroundColor('#007DFF')
             .borderRadius(28)
-            .fontSize(18)
+              .fontSize(18)
             .fontWeight(FontWeight.Medium)
-            .fontColor(Color.White)
+              .fontColor(Color.White)
             .shadow({ radius: 8, color: 'rgba(0, 125, 255, 0.3)', offsetX: 0, offsetY: 4 })
-            .onClick(() => {
-              this.currentIndex++;
-              this.swiperController.showNext();
-            })
-        }
+              .onClick(() => {
+                this.currentIndex++;
+                this.swiperController.showNext();
+              })
+          }
 
-        Text('跳过')
-          .fontSize(16)
+          Text('跳过')
+            .fontSize(16)
           .fontWeight(FontWeight.Medium)
           .fontColor('#FFFFFF')
           .opacity(0.8)
           .margin({ top: 20, bottom: 40 })
           .padding(10)
-          .onClick(() => {
+            .onClick(() => {
             // 直接设置index属性跳转到最后一页
-            this.currentIndex = this.welcomeData.length - 1;
-          })
-      }
-      .width('100%')
-      .alignItems(HorizontalAlign.Center)
+              this.currentIndex = this.welcomeData.length - 1;
+            })
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Center)
       .position({ x: '50%', y: '85%' })
       .translate({ x: '-50%' })
     }

@@ -193,7 +193,7 @@ export struct HealthPlanPage {
               }
           
           Progress({ value: this.completionRate, total: 100 })
-                .color('#007DFF')
+            .color('#007DFF')
                 .backgroundColor('#EEEEEE')
                 .width('100%')
                 .height(8)
@@ -275,7 +275,7 @@ export struct HealthPlanPage {
                     .fontColor('#999999')
                     .margin({ top: 4 })
                 }
-                .layoutWeight(1)
+              .layoutWeight(1)
                 .height(100)
                 .backgroundColor('#FFFFFF')
                 .borderRadius(16)
@@ -343,7 +343,7 @@ export struct HealthPlanPage {
                     .fontColor('#999999')
                     .margin({ top: 4 })
                 }
-                .layoutWeight(1)
+              .layoutWeight(1)
                 .height(100)
                 .backgroundColor('#FFFFFF')
                 .borderRadius(16)
@@ -438,7 +438,7 @@ export struct HealthPlanPage {
                   .borderRadius(25)
                   .opacity(achievement.unlocked ? 1 : 0.5)
                 
-                Column() {
+        Column() {
                   Row() {
                     Text(achievement.title)
                       .fontSize(16)
@@ -505,7 +505,7 @@ export struct HealthPlanPage {
         }
         .width('90%')
       }
-      .layoutWeight(1)
+        .layoutWeight(1)
       .scrollBar(BarState.Off)
     }
     .width('100%')

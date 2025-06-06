@@ -262,7 +262,7 @@ export struct ProfilePage {
                   .width('100%')
                   .height(44)
                   .borderRadius(22)
-                  .backgroundColor('#007DFF')
+            .backgroundColor('#007DFF')
                   .fontColor(Color.White)
                   .fontSize(16)
                   .fontWeight(FontWeight.Medium)
@@ -272,7 +272,7 @@ export struct ProfilePage {
               promptAction.showDialog({
                 title: '编辑个人信息',
                 message: '编辑功能正在开发中',
-                      buttons: [{ text: '确定', color: '#007DFF' }]
+                buttons: [{ text: '确定', color: '#007DFF' }]
               });
             })
               }
@@ -442,7 +442,7 @@ export struct ProfilePage {
         
         if (this.isLoading) {
           LoadingProgress()
-                .color('#007DFF')
+            .color('#007DFF')
             .width(50)
             .height(50)
                 .margin({ top: 20, bottom: 20 })
@@ -582,7 +582,7 @@ export struct ProfilePage {
           promptAction.showDialog({
             title: '健康报告',
               message: '您的健康报告正在生成中',
-              buttons: [{ text: '确定', color: '#007DFF' }]
+            buttons: [{ text: '确定', color: '#007DFF' }]
           });
         })
         }
