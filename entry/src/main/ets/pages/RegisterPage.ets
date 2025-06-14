@@ -20,7 +20,7 @@ struct RegisterPage {
     console.info('[RegisterPage] 开始注册流程');
     this.isLoading = true;
     console.info('开始请求注册');
-    const result = await authService.register(this.username, this.password);
+    let result = await authService.register(this.username, this.password);
     console.info(`[RegisterPage] 注册响应: code=${result.code}, message=${result.message}`);
     this.message = result.message;
     //注册成功
@@ -31,8 +31,21 @@ struct RegisterPage {
         message: this.message,
         buttons: [{ text: '确定', color: '#007DFF' }]
       });
-      console.info('[RegisterPage] 正在返回登录页面');
-      await router.pushUrl({ url: 'pages/LoginPage' });
+      result = await authService.login(this.username, this.password);
+      this.message = result.message;
+      console.info(`[LoginPage] 登录响应: code=${result.code}, message=${result.message}`);
+      if (result.code === 200) {
+        console.info('[LoginPage] 登录成功，准备进入问卷调查');
+        await router.pushUrl({ url: 'pages/Survey' });
+      } else {
+        // 登录失败
+        console.warn('[LoginPage] 登录失败，显示错误提示');
+        await promptAction.showDialog({
+          title: '登录失败',
+          message: result.message || '用户ID或密码错误，请重新输入',
+          buttons: [{ text: '确定', color: '#007DFF' }]
+        });
+      }
       //注册失败
     } else {
       console.warn('[RegisterPage] 注册失败');
@@ -43,6 +56,7 @@ struct RegisterPage {
       });
     }
     this.isLoading = false;
+
   }
 
   build() {

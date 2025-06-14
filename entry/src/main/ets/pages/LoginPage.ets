@@ -22,7 +22,7 @@ struct LoginPage {
       console.info(`[LoginPage] 登录响应: code=${result.code}, message=${result.message}`);
       if (result.code === 200) {
         console.info('[LoginPage] 登录成功，准备进入问卷调查');
-        await router.pushUrl({ url: 'pages/First' });
+        await router.pushUrl({ url: 'pages/Index' });
       } else {
         // 登录失败
         console.warn('[LoginPage] 登录失败，显示错误提示');
@@ -31,8 +31,6 @@ struct LoginPage {
           message: result.message || '用户ID或密码错误，请重新输入',
           buttons: [{ text: '确定', color: '#007DFF' }]
         });
-        // 清空密码输入框
-        this.password = '';
       }
     } catch (error) {
       console.error(`[LoginPage] 登录过程发生错误: ${JSON.stringify(error)}`);

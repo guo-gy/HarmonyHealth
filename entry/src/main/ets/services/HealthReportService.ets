@@ -1,19 +1,11 @@
 import { HealthReport, BasicInfo, HealthAnalysis, WorkoutTrend, HealthCharts, HealthPlan } from '../models/HealthReportModels';
-import { InformationService } from './InformationService';
-import { WorkoutService } from './WorkoutService';
-import { PlanService } from './PlanService';
+import { informationService } from './InformationService';
+import { planService } from './PlanService';
 
 export class HealthReportService {
   private static instance: HealthReportService;
-  private informationService: InformationService;
-  private workoutService: WorkoutService;
-  private planService: PlanService;
 
-  private constructor() {
-    this.informationService = InformationService.getInstance();
-    this.workoutService = WorkoutService.getInstance();
-    this.planService = PlanService.getInstance();
-  }
+  private constructor() {}
 
   public static getInstance(): HealthReportService {
     if (!HealthReportService.instance) {
@@ -23,8 +15,9 @@ export class HealthReportService {
   }
 
   private calculateBMI(height: number, weight: number): number {
+    // 身高转换为米
     const heightInMeters = height / 100;
-    return Number((weight / (heightInMeters * heightInMeters)).toFixed(1));
+    return weight / (heightInMeters * heightInMeters);
   }
 
   private getBMIStatus(bmi: number): string {
@@ -61,54 +54,69 @@ export class HealthReportService {
     return suggestion;
   }
 
-  private async getWorkoutTrends(userId: string): Promise<WorkoutTrend[]> {
-    const workouts = await this.workoutService.getRecentWorkouts(userId);
+  private generateMockWorkoutTrend(): WorkoutTrend[] {
     const today = new Date();
-    const trends: WorkoutTrend[] = [];
+    const trend: WorkoutTrend[] = [];
     
-    // 生成最近7天的日期
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
-      
-      // 计算当天的运动次数
-      const count = workouts.filter(w => 
-        new Date(w.date).toDateString() === date.toDateString()
-      ).length;
-      
-      trends.push({
-        date: dateStr,
-        count
+      trend.push({
+        date: `${date.getMonth() + 1}/${date.getDate()}`,
+        count: Math.floor(Math.random() * 3) + 1
       });
     }
     
-    return trends;
+    return trend;
   }
 
-  public async generateReport(userId: string): Promise<HealthReport> {
+  private generateMockHealthPlans(): HealthPlan[] {
+    return [
+      {
+        type: '体重目标',
+        current: 70,
+        target: 65,
+        period: '3个月',
+        progress: 0.2
+      },
+      {
+        type: '每周运动',
+        current: 3,
+        target: 5,
+        period: '1个月',
+        progress: 0.6
+      },
+      {
+        type: '每日步数',
+        current: 8000,
+        target: 10000,
+        period: '2周',
+        progress: 0.8
+      }
+    ];
+  }
+
+  public async generateReport(): Promise<HealthReport> {
     try {
       // 获取用户基本信息
-      const userInfo = await this.informationService.getUserInfo(userId);
-      const { height, weight, age } = userInfo;
+      const heightResult = await informationService.getAttribute('height');
+      const weightResult = await informationService.getAttribute('weight');
+      const ageResult = await informationService.getAttribute('age');
 
-      // 获取运动统计
-      const workoutStats = await this.workoutService.getWorkoutStats(userId);
-      const workoutCount = workoutStats.totalWorkouts;
+      if (heightResult.code !== 200 || weightResult.code !== 200 || ageResult.code !== 200) {
+        throw new Error('Failed to fetch user information');
+      }
 
-      // 计算健康指标
+      const height = heightResult.data?.height || 170;
+      const weight = weightResult.data?.weight || 60;
+      const age = ageResult.data?.age || 25;
+      const workoutCount = Math.floor(Math.random() * 7) + 1; // 模拟运动次数
+
       const bmi = this.calculateBMI(height, weight);
       const bmiStatus = this.getBMIStatus(bmi);
       const workoutAnalysis = this.getWorkoutAnalysis(workoutCount);
       const healthSuggestion = this.getHealthSuggestion(bmi, workoutCount);
 
-      // 获取运动趋势
-      const workoutTrends = await this.getWorkoutTrends(userId);
-
-      // 获取健康计划
-      const plans = await this.planService.getUserPlans(userId);
-
-      // 构建报告
       const basicInfo: BasicInfo = {
         height,
         weight,
@@ -124,8 +132,8 @@ export class HealthReportService {
       };
 
       const charts: HealthCharts = {
-        workoutTrend: workoutTrends,
-        plans
+        workoutTrend: this.generateMockWorkoutTrend(),
+        plans: this.generateMockHealthPlans()
       };
 
       return {

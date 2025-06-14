@@ -102,82 +102,102 @@ export struct AssistantPage {
 
   // --- UI 构建函数 ---
   build() {
-    Column() {
-      // 顶部标题栏
-      Row() {
-        Text(this.message).fontSize(22).fontWeight(FontWeight.Bold)
-        Blank()
-        Button({ type: ButtonType.Circle }) {
-          Image($r('app.media.notification_icon')).width(24).height(24)
-        }.width(40).height(40).backgroundColor(Color.White)
-      }
-      .width('100%').padding({ left: 20, right: 20, top: 20, bottom: 10 })
-      .justifyContent(FlexAlign.SpaceBetween).alignItems(VerticalAlign.Center)
-
-      // 聊天区域
-      List({ space: 12, initialIndex: this.chatMessages.length - 1 }) {
-        ForEach(this.chatMessages, (msg: ChatMessage) => {
-          ListItem() {
-            Row() {
-              if (msg.type === MessageType.RECEIVED) {
-                Image($r('app.media.assistant_avatar')).width(40).height(40).borderRadius(20)
-                Text(msg.content)
-                  .fontSize(16).padding(15).borderRadius(18)
-                  .backgroundColor(Color.White)
-                  .shadow({ radius: 4, color: 'rgba(0,0,0,0.05)' })
-                  .constraintSize({ maxWidth: '75%' })
-                  .margin({ left: 10 })
-              } else {
-                Blank()
-                Text(msg.content)
-                  .fontSize(16).padding(15).borderRadius(18)
-                  .backgroundColor('#007DFF').fontColor(Color.White)
-                  .shadow({ radius: 4, color: 'rgba(0,100,255,0.2)' })
-                  .constraintSize({ maxWidth: '75%' })
-                Image($r('app.media.user_avatar')).width(40).height(40).borderRadius(20).margin({ left: 10 })
-              }
-            }.width('100%').alignItems(VerticalAlign.Top)
-          }
-        }, (item: ChatMessage) => item.timestamp.getTime().toString()) // 使用时间戳作为唯一key
-      }
-      .width('100%').layoutWeight(1).padding({ left: 15, right: 15 })
-      .edgeEffect(EdgeEffect.None) // 去掉滚动到边缘的效果
-
-      // 加载动画
-      if (this.isLoading) {
+    Scroll() {
+      Column() {
+        // 顶部标题栏
         Row() {
-          LoadingProgress().width(20).height(20).color('#007DFF')
-          Text('助手思考中...').fontSize(14).fontColor(Color.Gray).margin({ left: 8 })
-        }.padding({ bottom: 10 })
-      }
+          Text(this.message).fontSize(22).fontWeight(FontWeight.Bold)
+          Blank()
+          Button({ type: ButtonType.Circle }) {
+            Image($r('app.media.notification_icon')).width(24).height(24)
+          }.width(40).height(40).backgroundColor(Color.White)
+        }
+        .width('100%')
+        .padding({
+          left: 20,
+          right: 20,
+          top: 20,
+          bottom: 10
+        })
+        .justifyContent(FlexAlign.SpaceBetween)
+        .alignItems(VerticalAlign.Center)
 
-      // 输入区域
-      Row({ space: 10 }) {
-        TextInput({ placeholder: '请输入您的问题...' ,text: this.inputMessage})
-          .layoutWeight(1).height(50)
-          .backgroundColor('#F7F7F7').borderRadius(25)
-          .padding({ left: 20, right: 20 })
-            // 关键：将 value 和 onChange 绑定，以实现双向数据流
-          .onChange((value: string) => {
-            this.inputMessage = value;
-          })
-          .onSubmit(() => { // 支持回车键发送
+        // 聊天区域
+        List({ space: 12, initialIndex: this.chatMessages.length - 1 }) {
+          ForEach(this.chatMessages, (msg: ChatMessage) => {
+            ListItem() {
+              Row() {
+                if (msg.type === MessageType.RECEIVED) {
+                  Image($r('app.media.assistant_avatar')).width(40).height(40).borderRadius(20)
+                  Text(msg.content)
+                    .fontSize(16)
+                    .padding(15)
+                    .borderRadius(18)
+                    .backgroundColor(Color.White)
+                    .shadow({ radius: 4, color: 'rgba(0,0,0,0.05)' })
+                    .constraintSize({ maxWidth: '75%' })
+                    .margin({ left: 10 })
+                } else {
+                  Blank()
+                  Text(msg.content)
+                    .fontSize(16)
+                    .padding(15)
+                    .borderRadius(18)
+                    .backgroundColor('#007DFF')
+                    .fontColor(Color.White)
+                    .shadow({ radius: 4, color: 'rgba(0,100,255,0.2)' })
+                    .constraintSize({ maxWidth: '75%' })
+                  Image($r('app.media.user_avatar')).width(40).height(40).borderRadius(20).margin({ left: 10 })
+                }
+              }.width('100%').alignItems(VerticalAlign.Top)
+            }
+          }, (item: ChatMessage) => item.timestamp.getTime().toString()) // 使用时间戳作为唯一key
+        }
+        .width('100%').layoutWeight(1).padding({ left: 15, right: 15 })
+        .edgeEffect(EdgeEffect.None) // 去掉滚动到边缘的效果
+
+        // 加载动画
+        if (this.isLoading) {
+          Row() {
+            Text('助手正在后台思考,请稍后查看.').fontSize(14).fontColor(Color.Gray).margin({ left: 8 })
+          }.padding({ bottom: 10 })
+        }
+
+        // 输入区域
+        Row({ space: 10 }) {
+          TextInput({ placeholder: '请输入您的问题...', text: this.inputMessage })
+            .layoutWeight(1)
+            .height(50)
+            .backgroundColor('#F7F7F7')
+            .borderRadius(25)
+            .padding({ left: 20, right: 20 })// 关键：将 value 和 onChange 绑定，以实现双向数据流
+            .onChange((value: string) => {
+              this.inputMessage = value;
+            })
+            .onSubmit(() => { // 支持回车键发送
+              this.sendMessage();
+            })
+
+          Button({ type: ButtonType.Circle }) {
+            Image($r('app.media.send_icon')).width(24).height(24)
+          }
+          .width(50)
+          .height(50)
+          .backgroundColor(this.inputMessage.length > 0 ? '#007DFF' : '#E0E0E0')
+          .enabled(this.inputMessage.length > 0 && !this.isLoading)
+          .onClick(() => {
             this.sendMessage();
           })
-
-        Button({ type: ButtonType.Circle }) {
-          Image($r('app.media.send_icon')).width(24).height(24)
         }
-        .width(50).height(50)
-        .backgroundColor(this.inputMessage.length > 0 ? '#007DFF' : '#E0E0E0')
-        .enabled(this.inputMessage.length > 0 && !this.isLoading)
-        .onClick(() => {
-          this.sendMessage();
-        })
-      }
-      .width('100%').padding(15).backgroundColor(Color.White)
-      .shadow({ radius: 16, color: 'rgba(0,0,0,0.05)', offsetY: -4 })
+        .width('100%').padding(15).backgroundColor(Color.White)
+        .shadow({ radius: 16, color: 'rgba(0,0,0,0.05)', offsetY: -4 })
 
-    }.width('100%').height('100%').backgroundColor('#F0F2F5')
+      }.width('100%').height('100%').backgroundColor('#F0F2F5')
+    }
+    .backgroundColor('#F0F2F5')
+    .height('100%')
+    .width('100%')
+    .scrollBar(BarState.Auto)
+    .edgeEffect(EdgeEffect.Spring)
   }
 }

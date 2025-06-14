@@ -14,30 +14,46 @@ class InformationService {
    * @param value - 要设置的新值
    */
   async updateAttribute(attributeName: InformationAttribute, value: string | number): Promise<UpdateInformationResponse> {
-    // 根据 attribute_name 构建动态 URL
     const url = `${this.BASE_URL}/api/information/update/${attributeName}/`;
     const token = await UserSessionManager.getToken();
     console.info(`[InfoService] 发送更新请求到: ${url}`);
+
     if (!token) {
+      // 这里的返回逻辑可以保留
       return { code: 401, message: '用户未登录', data: null };
     }
-    // 构建请求体，键名是动态的
+
+    // [修复 1]：构建一个固定结构的请求体，键名始终为 'value'
     const requestBody = {
-      [attributeName]: value
+      value: value
     };
+
 
     const httpRequest = http.createHttp();
     try {
-      // http 模块会自动携带登录时获取的 sessionid cookie
       const response = await httpRequest.request(url, {
         method: http.RequestMethod.POST,
-        header: { 'Content-Type': 'application/json' ,'Authorization': `Token ${token}`},
+        header: {
+          'Content-Type': 'application/json', // 依然是必须的
+          'Authorization': `Token ${token}`
+        },
         extraData: JSON.stringify(requestBody)
       });
 
       console.info(`[InfoService] 更新 '${attributeName}' 响应码: ${response.responseCode}`);
+
+      // 增加对 400 错误的详细日志记录
+      if (response.responseCode >= 400) {
+        console.error(`[InfoService] 服务器返回错误: ${response.responseCode}`, response.result);
+      }
+
       const result: UpdateInformationResponse = JSON.parse(response.result as string);
       return result;
+
+    } catch (err) {
+      console.error(`[InfoService] 请求 '${attributeName}' 时发生网络或解析错误:`, err);
+      // 抛出错误或返回一个表示失败的固定对象
+      throw err;
     } finally {
       httpRequest.destroy();
     }
