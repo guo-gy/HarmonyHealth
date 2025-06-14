@@ -1,6 +1,6 @@
 import router from '@ohos.router';
 import promptAction from '@ohos.promptAction';
-
+import { chatService, ApiChatMessage } from '../services/ChatService';
 // 定义消息类型
 enum MessageType {
   SENT,
@@ -28,7 +28,8 @@ struct AssistantPage {
   @State isLoading: boolean = false;
   @State planContent: string = '';
   @State inputMessage: string = '';
-  @State chatMessages: ChatMessage[] = [];
+  @State chatMessages: ChatMessage[] = []; // 用于UI显示
+  @State conversationHistory: ApiChatMessage[] = []; // 用于API交互
   @State healthTips: HealthTip[] = [
     {
       title: '今日饮食建议',
@@ -243,35 +244,63 @@ struct AssistantPage {
     .backgroundColor('#F8F8F8')
   }
 
-  sendMessage() {
-    if (this.inputMessage.trim().length === 0) {
+  async sendMessage() {
+    if (this.inputMessage.trim().length === 0 || this.isLoading) {
       return;
     }
 
-    // 添加用户消息
+    const userMessageContent = this.inputMessage.trim();
+
+    // 步骤 A: 更新UI
     this.chatMessages.push({
-      content: this.inputMessage,
+      content: userMessageContent,
       type: MessageType.SENT,
       timestamp: new Date()
     });
-
-    const message = this.inputMessage;
     this.inputMessage = '';
     this.isLoading = true;
 
-    // 模拟AI回复
-    setTimeout(() => {
-      let response: string = '感谢您的提问。作为您的健康助手，我可以为您提供运动建议、饮食指导和健康计划。请告诉我您需要什么帮助？';
-      
-      this.chatMessages.push({
-        content: response,
-        type: MessageType.RECEIVED,
-        timestamp: new Date()
+    // 步骤 B: 调用 ChatService
+    try {
+      // 直接调用抽离出去的 service 方法
+      const result = await chatService.sendMessage({
+        message: userMessageContent,
+        history: this.conversationHistory,
       });
-      
-      this.isLoading = false;
-    }, 1000);
+
+      // 步骤 C: 处理返回结果
+      if (result.code === 200) {
+        // 业务成功
+        const aiReply = result.data.reply;
+        const updatedHistory = result.data.history;
+
+        this.chatMessages.push({
+          content: aiReply,
+          type: MessageType.RECEIVED,
+          timestamp: new Date()
+        });
+        this.conversationHistory = updatedHistory; // 更新API历史
+      } else {
+        // 业务失败或网络失败，统一处理
+        this.handleError(result.message);
+      }
+    } catch (err) {
+      // 捕获一些意料之外的JS错误
+      this.handleError('发生未知错误');
+      console.error('Unexpected error in sendMessage:', err);
+    } finally {
+      this.isLoading = false; // 结束加载状态
+    }
+  }
+
+  // 辅助函数，用于统一处理错误并在UI上显示 (保持不变)
+  handleError(errorMessage: string) {
+    this.chatMessages.push({
+      content: `发生错误: ${errorMessage}`,
+      type: MessageType.RECEIVED,
+      timestamp: new Date()
+    });
+    promptAction.showToast({ message: errorMessage, duration: 3000 });
   }
 }
-
 export { AssistantPage }
