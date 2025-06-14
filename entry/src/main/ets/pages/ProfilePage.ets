@@ -2,6 +2,7 @@ import promptAction from '@ohos.promptAction';
 import { InformationData } from '../models/InformationModels';
 import { informationService } from '../services/InformationService';
 import UserSessionManager from '../common/UserSession';
+import router from '@ohos.router';
 
 // 定义健康指标接口
 interface HealthMetric {
@@ -624,12 +625,7 @@ export struct ProfilePage {
             offsetY: 2
           })
           .onClick(() => {
-            this.showHealthReport = true;
-            promptAction.showDialog({
-              title: '健康报告',
-              message: '您的健康报告正在生成中',
-              buttons: [{ text: '确定', color: '#007DFF' }]
-            });
+            router.pushUrl({ url: 'pages/HealthReportPage' });
           })
         }
         .width('100%')

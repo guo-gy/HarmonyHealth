@@ -8,6 +8,7 @@
     "pages/Forth",
     "pages/LoginPage",
     "pages/RegisterPage",
-    "pages/AssistantPage"
+    "pages/AssistantPage",
+    "pages/HealthReportPage"
   ]
 }
