@@ -2,6 +2,46 @@ import router from '@ohos.router';
 import promptAction from '@ohos.promptAction';
 import { planService } from '../services/PlanService';
 import { Plan } from '../models/PlanModels';
+import http from '@ohos.net.http';
+
+// 定义天气数据接口
+interface WeatherData {
+  max_degree: string;
+  day_weather_short: string;
+  time: string;
+}
+
+// 定义 forecast_24h 对象的类型别名
+type Forecast24hCollection = Record<string, WeatherData>;
+
+// 新增：为 API 响应中的空对象定义专用类，以满足 ArkTS 严格的类型要求
+class ApiRiseObject {}
+class ApiForecast1hObject {}
+
+// 定义 API 响应中可能为空的嵌套对象类
+class EmptyApiObject {}
+class EmptyApiArray extends Array<object> {}
+
+// 定义 API 响应中 data 对象的接口
+interface WeatherApiResponseData {
+  forecast_24h: Forecast24hCollection;
+  // 其他可能存在的属性，如果需要可以使用 any 或更具体的接口
+  air?: object | null;
+  limit?: object | null;
+  index?: object | null;
+  observe?: object | null;
+  tips?: object | null;
+  alarm?: object[];
+  rise?: object;
+  forecast_1h?: object;
+}
+
+// 定义主响应接口
+interface WeatherResponse {
+  status: number;
+  message: string;
+  data: WeatherApiResponseData;
+}
 
 @Entry
 @Component
@@ -10,9 +50,66 @@ export struct HealthPlanPage {
   @State selectedDay: number = new Date().getDay() === 0 ? 7 : new Date().getDay();
   @State isLoading: boolean = false;
   @State dailyPlanItems: Plan[] = [];
+  @State temperatures: string[] = Array(7).fill('--°');
+  @State weathers: string[] = Array(7).fill('--');
 
   private weekDays = ['一', '二', '三', '四', '五', '六', '日'];
   private months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+
+  // 获取天气数据
+  private async fetchWeatherData(): Promise<void> {
+    let httpRequest = http.createHttp();
+    try {
+      const response = await httpRequest.request(
+        'https://wis.qq.com/weather/common?source=pc&weather_type=observe|forecast_24h&province=山东&city=济南&county=历下区',
+        {
+          method: http.RequestMethod.GET,
+          header: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      console.log(`Weather API Response Code: ${response.responseCode}`);
+      console.log(`Weather API Response Result: ${response.result}`);
+
+      if (response.responseCode === 200) {
+        const data = JSON.parse(response.result as string) as WeatherResponse; // 直接断言为接口类型
+        console.log(`Parsed Weather Data: ${JSON.stringify(data)}`);
+
+        if (data.status === 200 && data.data && data.data.forecast_24h) {
+          const forecastObject = data.data.forecast_24h;
+          const forecastArray: WeatherData[] = Object.values(forecastObject);
+
+          // Sort the array by 'time' to ensure correct order
+          forecastArray.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+
+          console.log(`Weather Forecast Array (after conversion and sort): ${JSON.stringify(forecastArray)}`);
+
+          for (let i = 0; i < forecastArray.length; i++) {
+            const dayForecast = forecastArray[i];
+            if (dayForecast && dayForecast.time) {
+              const forecastDate = new Date(dayForecast.time); // 获取预报日期
+              // 计算星期几对应的 0-6 索引 (0:周一, ..., 6:周日)
+              let dayOfWeekIndex = forecastDate.getDay(); // 0:周日, 1:周一, ..., 6:周六
+              dayOfWeekIndex = (dayOfWeekIndex === 0) ? 6 : (dayOfWeekIndex - 1); // 转换为 0:周一, ..., 6:周日
+
+              if (dayOfWeekIndex >= 0 && dayOfWeekIndex < 7) {
+                this.temperatures[dayOfWeekIndex] = `${dayForecast.max_degree}°`;
+                this.weathers[dayOfWeekIndex] = dayForecast.day_weather_short;
+              }
+            }
+          }
+          this.temperatures = [...this.temperatures]; // Trigger UI update
+          this.weathers = [...this.weathers]; // Trigger UI update
+        }
+      }
+    } catch (error) {
+      console.error('获取天气数据失败:', error instanceof Error ? error.message : String(error));
+    } finally {
+      httpRequest.destroy();
+    }
+  }
 
   // --- 辅助方法 ---
   private getSelectedDate(): Date {
@@ -31,7 +128,6 @@ export struct HealthPlanPage {
   // --- 新增：专门用于计算日期数字的辅助方法 ---
   private getDayNumberFor(index: number): number {
     const today = new Date();
-    // 使用 getDay() || 7 的技巧处理周日
     const todayDayOfWeek = today.getDay() || 7;
     const targetDayOfWeek = index + 1;
     const diff = targetDayOfWeek - todayDayOfWeek;
@@ -41,7 +137,10 @@ export struct HealthPlanPage {
 
   // --- 核心逻辑函数 ---
   async aboutToAppear(): Promise<void> {
-    await this.loadPlansForSelectedDay();
+    await Promise.all([
+      this.loadPlansForSelectedDay(),
+      this.fetchWeatherData()
+    ]);
   }
 
   async loadPlansForSelectedDay(): Promise<void> {
@@ -54,8 +153,8 @@ export struct HealthPlanPage {
       } else {
         promptAction.showToast({ message: `加载计划失败: ${result.message}` });
       }
-    } catch (e) {
-      const err = e as Error;
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       promptAction.showToast({ message: `网络异常: ${err.message}` });
     } finally {
       this.isLoading = false;
@@ -75,8 +174,9 @@ export struct HealthPlanPage {
         this.dailyPlanItems[planIndex].is_completed = originalStatus;
         this.dailyPlanItems = [...this.dailyPlanItems];
       }
-    } catch (e) {
-      promptAction.showToast({ message: `网络异常，更新失败` });
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      promptAction.showToast({ message: `网络异常，更新失败: ${err.message}` });
       this.dailyPlanItems[planIndex].is_completed = originalStatus;
       this.dailyPlanItems = [...this.dailyPlanItems];
     }
@@ -101,7 +201,7 @@ export struct HealthPlanPage {
       Scroll() {
         Row({ space: 8 }) {
           ForEach(this.weekDays, (day: string, index: number) => {
-            Column({ space: 8 }) {
+            Column({ space: 4 }) {
               Text(day).fontSize(14).fontColor(this.selectedDay === index + 1 ? Color.White : Color.Gray)
               // --- 在这里调用新的辅助方法 ---
               Text(this.getDayNumberFor(index).toString())
@@ -110,8 +210,14 @@ export struct HealthPlanPage {
                 .fontColor(this.selectedDay === index + 1 ? '#007DFF' : Color.Black)
                 .fontSize(16).fontWeight(FontWeight.Bold)
                 .textAlign(TextAlign.Center).lineHeight(36)
+              Text(this.temperatures[index])
+                .fontSize(12)
+                .fontColor(this.selectedDay === index + 1 ? Color.White : Color.Gray)
+              Text(this.weathers[index])
+                .fontSize(12)
+                .fontColor(this.selectedDay === index + 1 ? Color.White : Color.Gray)
             }
-            .width(52).height(80).borderRadius(26).backgroundColor(this.selectedDay === index + 1 ? '#007DFF' : Color.Transparent)
+            .width(52).height(100).borderRadius(26).backgroundColor(this.selectedDay === index + 1 ? '#007DFF' : Color.Transparent)
             .justifyContent(FlexAlign.Center).animation({ duration: 300, curve: Curve.EaseInOut })
             .onClick(async () => {
               this.selectedDay = index + 1;
