@@ -49,3 +49,20 @@ export interface MutatePlanSuccessData {
   updated?: number;
   id?: number;
 }
+
+export interface RecentPlan {
+  id: number;
+  title: string;
+  description?: string;
+  start_time: string;
+  is_completed: boolean;
+  display_date: string; // 后端格式化好的显示日期
+}
+
+export interface GetRecentPlansSuccessData {
+  recent_plans: RecentPlan[];
+}
+
+export interface GetOverPlansSuccessData {
+  recent_plans_count: number;
+}

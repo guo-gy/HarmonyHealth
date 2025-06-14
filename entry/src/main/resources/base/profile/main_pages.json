@@ -2,10 +2,7 @@
   "src": [
     "pages/WelcomeIndex",
     "pages/Index",
-    "pages/First",
-    "pages/Second",
-    "pages/Third",
-    "pages/Forth",
+    "pages/Survey",
     "pages/LoginPage",
     "pages/RegisterPage",
     "pages/AssistantPage"

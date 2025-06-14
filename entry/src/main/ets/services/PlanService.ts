@@ -1,12 +1,11 @@
 import http from '@ohos.net.http';
 import { AppConfig } from '../common/config';
 import UserSessionManager from '../common/UserSession';
-import { NewPlanData } from '../models/PlanModels';
+import { NewPlanData,RecentPlan,GetRecentPlansSuccessData,GetOverPlansSuccessData } from '../models/PlanModels';
 
 // ======================================================
 // === 类型定义部分 (确保每一个都被导出) ===
 // ======================================================
-
 /**
  * API响应的通用基础结构
  */
@@ -122,6 +121,48 @@ class PlanService {
     const url = `${this.BASE_URL}plan/manage/`;
     // 后端通过 planData 中是否包含 'id' 来判断是创建还是更新
     return this.sendManageRequest(url, planData);
+  }
+  async getRecentPlans(limit: number = 5): Promise<ApiResponse<GetRecentPlansSuccessData>> {
+    const url = `${this.BASE_URL}/api/plan/recent/?limit=${limit}`;
+    const token = await UserSessionManager.getToken();
+    if (!token) return { code: 401, message: '用户未登录', data: null };
+
+    const httpRequest = http.createHttp();
+    try {
+      const response = await httpRequest.request(url, {
+        method: http.RequestMethod.GET,
+        header: { 'Authorization': `Token ${token}` },
+      });
+      if (response.responseCode === 200) {
+        return JSON.parse(response.result as string);
+      }
+      return { code: response.responseCode, message: '获取最近计划失败', data: null };
+    } catch (err) {
+      return { code: -1, message: '网络请求异常', data: null };
+    } finally {
+      httpRequest.destroy();
+    }
+  }
+  async getOverPlans(): Promise<ApiResponse<GetOverPlansSuccessData>> {
+    const url = `${this.BASE_URL}/api/plan/over/`;
+    const token = await UserSessionManager.getToken();
+    if (!token) return { code: 401, message: '用户未登录', data: null };
+
+    const httpRequest = http.createHttp();
+    try {
+      const response = await httpRequest.request(url, {
+        method: http.RequestMethod.GET,
+        header: { 'Authorization': `Token ${token}` },
+      });
+      if (response.responseCode === 200) {
+        return JSON.parse(response.result as string);
+      }
+      return { code: response.responseCode, message: '获取最近完成计划数失败', data: null };
+    } catch (err) {
+      return { code: -1, message: '网络请求异常', data: null };
+    } finally {
+      httpRequest.destroy();
+    }
   }
 }
 
