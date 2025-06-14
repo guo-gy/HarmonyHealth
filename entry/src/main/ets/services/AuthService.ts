@@ -18,15 +18,22 @@ class AuthService {
 
     const httpRequest = http.createHttp();
     try {
+      const requestBody = { username: username, password };
+      console.info(`[AuthService] 注册请求体: ${JSON.stringify(requestBody)}`);
+      
       const response = await httpRequest.request(url, {
         method: http.RequestMethod.POST,
         header: { 'Content-Type': 'application/json' },
-        extraData: JSON.stringify({ username, password })
+        extraData: JSON.stringify(requestBody)
       });
 
       console.info(`[AuthService] 注册响应码: ${response.responseCode}`);
+      console.info(`[AuthService] 注册响应内容: ${response.result}`);
       const result: ServiceResult<AuthData> = JSON.parse(response.result as string);
       return result;
+    } catch (error) {
+      console.error(`[AuthService] 注册请求失败: ${error.message}`);
+      throw error;
     } finally {
       httpRequest.destroy();
     }

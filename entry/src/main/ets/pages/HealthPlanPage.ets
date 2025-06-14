@@ -2,6 +2,46 @@ import router from '@ohos.router';
 import promptAction from '@ohos.promptAction';
 import { planService } from '../services/PlanService';
 import { Plan } from '../models/PlanModels';
+import http from '@ohos.net.http';
+
+// 定义天气数据接口
+interface WeatherData {
+  max_degree: string;
+  day_weather_short: string;
+  time: string;
+}
+
+// 定义 forecast_24h 对象的类型别名
+type Forecast24hCollection = Record<string, WeatherData>;
+
+// 新增：为 API 响应中的空对象定义专用类，以满足 ArkTS 严格的类型要求
+class ApiRiseObject {}
+class ApiForecast1hObject {}
+
+// 定义 API 响应中可能为空的嵌套对象类
+class EmptyApiObject {}
+class EmptyApiArray extends Array<object> {}
+
+// 定义 API 响应中 data 对象的接口
+interface WeatherApiResponseData {
+  forecast_24h: Forecast24hCollection;
+  // 其他可能存在的属性，如果需要可以使用 any 或更具体的接口
+  air?: object | null;
+  limit?: object | null;
+  index?: object | null;
+  observe?: object | null;
+  tips?: object | null;
+  alarm?: object[];
+  rise?: object;
+  forecast_1h?: object;
+}
+
+// 定义主响应接口
+interface WeatherResponse {
+  status: number;
+  message: string;
+  data: WeatherApiResponseData;
+}
 
 @Entry
 @Component
@@ -10,14 +50,122 @@ export struct HealthPlanPage {
   @State selectedDay: number = new Date().getDay() === 0 ? 7 : new Date().getDay();
   @State isLoading: boolean = false;
   @State dailyPlanItems: Plan[] = [];
-
-  // 页面显示时，进行初始加载
-  onPageShow(): void {
-    this.loadPlansForSelectedDay();
-  }
+  @State temperatures: string[] = Array(7).fill('--°');
+  @State weathers: string[] = Array(7).fill('--');
 
   private weekDays = ['一', '二', '三', '四', '五', '六', '日'];
   private months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+
+  // --- 核心逻辑函数 ---
+
+  // 页面即将显示时，并行加载计划和天气数据
+  async aboutToAppear(): Promise<void> {
+    await Promise.all([
+      this.loadPlansForSelectedDay(),
+      this.fetchWeatherData()
+    ]);
+  }
+
+  // 获取天气数据
+  private async fetchWeatherData(): Promise<void> {
+    let httpRequest = http.createHttp();
+    try {
+      const response = await httpRequest.request(
+        'https://wis.qq.com/weather/common?source=pc&weather_type=observe|forecast_24h&province=山东&city=济南&county=历下区',
+        {
+          method: http.RequestMethod.GET,
+          header: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log(`Weather API Response Code: ${response.responseCode}`);
+
+      if (response.responseCode === 200) {
+        const data = JSON.parse(response.result as string) as WeatherResponse;
+        console.log(`Parsed Weather Data: ${JSON.stringify(data)}`);
+
+        if (data.status === 200 && data.data && data.data.forecast_24h) {
+          const forecastObject = data.data.forecast_24h;
+          const forecastArray: WeatherData[] = Object.values(forecastObject);
+
+          // 按时间排序以确保顺序正确
+          forecastArray.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+
+          console.log(`Weather Forecast Array (after conversion and sort): ${JSON.stringify(forecastArray)}`);
+
+          for (let i = 0; i < forecastArray.length; i++) {
+            const dayForecast = forecastArray[i];
+            if (dayForecast && dayForecast.time) {
+              const forecastDate = new Date(dayForecast.time);
+              // 计算星期几对应的 0-6 索引 (0:周一, ..., 6:周日)
+              let dayOfWeekIndex = forecastDate.getDay(); // 0:周日, 1:周一, ..., 6:周六
+              dayOfWeekIndex = (dayOfWeekIndex === 0) ? 6 : (dayOfWeekIndex - 1); // 转换为 0:周一, ..., 6:周日
+
+              if (dayOfWeekIndex >= 0 && dayOfWeekIndex < 7) {
+                this.temperatures[dayOfWeekIndex] = `${dayForecast.max_degree}°`;
+                this.weathers[dayOfWeekIndex] = dayForecast.day_weather_short;
+              }
+            }
+          }
+          // 触发UI更新
+          this.temperatures = [...this.temperatures];
+          this.weathers = [...this.weathers];
+        }
+      }
+    } catch (error) {
+      console.error('获取天气数据失败:', error instanceof Error ? error.message : String(error));
+    } finally {
+      httpRequest.destroy();
+    }
+  }
+
+  // 加载选定日期的计划
+  async loadPlansForSelectedDay(): Promise<void> {
+    this.isLoading = true;
+    this.dailyPlanItems = [];
+    try {
+      const result = await planService.getPlans(this.selectedDay);
+      if (result.code === 200 && result.data) {
+        this.dailyPlanItems = result.data.plans.sort((a: Plan, b: Plan) => a.start_time.localeCompare(b.start_time));
+      } else {
+        promptAction.showToast({ message: `加载计划失败: ${result.message}` });
+      }
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      promptAction.showToast({ message: `网络异常: ${err.message}` });
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  // 切换计划完成状态
+  async togglePlanCompletion(planToUpdate: Plan): Promise<void> {
+    const originalStatus = planToUpdate.is_completed;
+    const planIndex = this.dailyPlanItems.findIndex((p: Plan) => p.id === planToUpdate.id);
+    if (planIndex === -1) {
+      return;
+    }
+    // 立即更新UI以获得即时反馈
+    this.dailyPlanItems[planIndex].is_completed = !originalStatus;
+    this.dailyPlanItems = [...this.dailyPlanItems];
+    try {
+      const result = await planService.updatePlan(planToUpdate.id, { is_completed: !originalStatus });
+      // 如果API调用失败，则恢复原状
+      if (result.code !== 200) {
+        promptAction.showToast({ message: `更新失败: ${result.message}` });
+        this.dailyPlanItems[planIndex].is_completed = originalStatus;
+        this.dailyPlanItems = [...this.dailyPlanItems];
+      }
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      promptAction.showToast({ message: `网络异常，更新失败: ${err.message}` });
+      // 如果API调用失败，则恢复原状
+      this.dailyPlanItems[planIndex].is_completed = originalStatus;
+      this.dailyPlanItems = [...this.dailyPlanItems];
+    }
+  }
 
   // --- 辅助方法 ---
   private getSelectedDate(): Date {
@@ -29,16 +177,14 @@ export struct HealthPlanPage {
 
   private getCompletionRate(): number {
     if (this.dailyPlanItems.length === 0) {
-      return 100;
+      return 100; // 如果没有计划，可以视为100%完成
     }
     const completedCount = this.dailyPlanItems.filter((item: Plan) => item.is_completed).length;
     return Math.round((completedCount / this.dailyPlanItems.length) * 100);
   }
 
-  // --- 新增：专门用于计算日期数字的辅助方法 ---
   private getDayNumberFor(index: number): number {
     const today = new Date();
-    // 使用 getDay() || 7 的技巧处理周日
     const todayDayOfWeek = today.getDay() || 7;
     const targetDayOfWeek = index + 1;
     const diff = targetDayOfWeek - todayDayOfWeek;
@@ -46,56 +192,11 @@ export struct HealthPlanPage {
     return targetDate.getDate();
   }
 
-  // --- 核心逻辑函数 ---
-  async aboutToAppear(): Promise<void> {
-    await this.loadPlansForSelectedDay();
-  }
-
-  async loadPlansForSelectedDay(): Promise<void> {
-    this.isLoading = true;
-    this.dailyPlanItems = [];
-    try {
-      const result = await planService.getPlans(this.selectedDay);
-      if (result.code === 200 && result.data) {
-        this.dailyPlanItems = result.data.plans.sort((a: Plan, b: Plan) => a.start_time.localeCompare(b.start_time));
-      } else {
-        promptAction.showToast({ message: `加载计划失败: ${result.message}` });
-      }
-    } catch (e) {
-      const err = e as Error;
-      promptAction.showToast({ message: `网络异常: ${err.message}` });
-    } finally {
-      this.isLoading = false;
-    }
-  }
-
-  async togglePlanCompletion(planToUpdate: Plan): Promise<void> {
-    const originalStatus = planToUpdate.is_completed;
-    const planIndex = this.dailyPlanItems.findIndex((p: Plan) => p.id === planToUpdate.id);
-    if (planIndex === -1) {
-      return;
-    }
-    this.dailyPlanItems[planIndex].is_completed = !originalStatus;
-    this.dailyPlanItems = [...this.dailyPlanItems];
-    try {
-      const result = await planService.updatePlan(planToUpdate.id, { is_completed: !originalStatus });
-      if (result.code !== 200) {
-        promptAction.showToast({ message: `更新失败: ${result.message}` });
-        this.dailyPlanItems[planIndex].is_completed = originalStatus;
-        this.dailyPlanItems = [...this.dailyPlanItems];
-      }
-    } catch (e) {
-      promptAction.showToast({ message: `网络异常，更新失败` });
-      this.dailyPlanItems[planIndex].is_completed = originalStatus;
-      this.dailyPlanItems = [...this.dailyPlanItems];
-    }
-  }
-
   build() {
     // 1. 最外层使用 Scroll 组件，使其所有子组件都可滚动
     Scroll() {
       // 2. 在 Scroll 内部使用一个 Column 来垂直排列所有内容
-      Column({ space: 16 }) { // 给页面元素之间增加一些垂直间距
+      Column({ space: 16 }) {
         // 顶部标题和日期
         Row({ space: 12 }) {
           Column({ space: 4 }) {
@@ -110,38 +211,37 @@ export struct HealthPlanPage {
           }.width(44).height(44).backgroundColor(Color.White)
         }
         .width('100%')
-        .padding({
-          left: 20,
-          right: 20,
-          top: 20, // 顶部留出状态栏空间
-          bottom: 10
-        })
+        .padding({ left: 20, right: 20, top: 20, bottom: 10 })
 
         // 周选择器 (水平滚动)
         Scroll() {
           Row({ space: 8 }) {
             ForEach(this.weekDays, (day: string, index: number) => {
-              Column({ space: 8 }) {
+              Column({ space: 4 }) {
                 Text(day).fontSize(14).fontColor(this.selectedDay === index + 1 ? Color.White : Color.Gray)
+
                 Text(this.getDayNumberFor(index).toString())
-                  .width(36)
-                  .height(36)
-                  .borderRadius(18)
+                  .width(36).height(36).borderRadius(18)
                   .backgroundColor(this.selectedDay === index + 1 ? Color.White : Color.Transparent)
                   .fontColor(this.selectedDay === index + 1 ? '#007DFF' : Color.Black)
-                  .fontSize(16)
-                  .fontWeight(FontWeight.Bold)
-                  .textAlign(TextAlign.Center)
-                  .lineHeight(36)
+                  .fontSize(16).fontWeight(FontWeight.Bold)
+                  .textAlign(TextAlign.Center).lineHeight(36)
+
+                Text(this.temperatures[index])
+                  .fontSize(12)
+                  .fontColor(this.selectedDay === index + 1 ? Color.White : Color.Gray)
+
+                Text(this.weathers[index])
+                  .fontSize(12)
+                  .fontColor(this.selectedDay === index + 1 ? Color.White : Color.Gray)
               }
-              .width(52)
-              .height(80)
-              .borderRadius(26)
+              .width(52).height(100).borderRadius(26)
               .backgroundColor(this.selectedDay === index + 1 ? '#007DFF' : Color.Transparent)
               .justifyContent(FlexAlign.Center)
               .animation({ duration: 300, curve: Curve.EaseInOut })
               .onClick(async () => {
                 this.selectedDay = index + 1;
+                // 点击后只加载计划，天气数据在页面加载时已获取一周
                 await this.loadPlansForSelectedDay();
               })
             }, (item: string, index: number) => index.toString())
@@ -180,10 +280,9 @@ export struct HealthPlanPage {
               Text('今天没有计划，好好放松一下吧！').fontSize(16).fontColor(Color.Gray)
             }.width('100%').height(200).justifyContent(FlexAlign.Center)
           } else {
-            // 3. 将 List 换回 Column + ForEach，因为它不再需要独立滚动
+            // 3. 使用 Column + ForEach 实现列表，因为它不再需要独立滚动
             Column({ space: 12 }) {
               ForEach(this.dailyPlanItems, (item: Plan) => {
-                // 单个列表项的布局没有变化
                 Row({ space: 12 }) {
                   Text(`${item.start_time}\n${item.end_time}`)
                     .fontSize(14).fontColor(Color.Gray).textAlign(TextAlign.Center).width(60)
@@ -217,8 +316,7 @@ export struct HealthPlanPage {
         .backgroundColor(Color.White)
         .borderRadius(16)
         .width('90%') // 使用百分比保持居中
-        // 4. 移除所有 layoutWeight(1) 属性
-        .margin({ bottom: 20 }) // 在页面底部增加一些边距，避免内容紧贴屏幕边缘
+        .margin({ bottom: 20 }) // 在页面底部增加一些边距
       }
       .width('100%')
       .alignItems(HorizontalAlign.Center) // 让所有子组件（卡片）水平居中
@@ -226,7 +324,7 @@ export struct HealthPlanPage {
     .backgroundColor('#F0F2F5')
     .height('100%')
     .width('100%')
-    .scrollBar(BarState.Auto) // 显示滚动条
-    .edgeEffect(EdgeEffect.Spring) // 可以设置滚动到边缘的回弹效果
+    .scrollBar(BarState.Auto)
+    .edgeEffect(EdgeEffect.Spring)
   }
 }
