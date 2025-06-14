@@ -163,7 +163,7 @@ export struct ProfilePage {
                   { text: '确认退出', color: '#FF3B30' }
                 ]
               }).then(result => {
-                // 如果用户点击了“确认退出”（索引为 1）
+                // 如果用户点击了"确认退出"（索引为 1）
                 if (result.index === 1) {
                   this.handleLogout();
                 }
@@ -339,40 +339,11 @@ export struct ProfilePage {
             .fontWeight(FontWeight.Medium)
             .margin({ bottom: 20 })
             .onClick(() => {
-              // 点击后执行此处的代码
               console.info('开始新的运动 按钮被点击，准备跳转到 WorkoutPage');
               router.pushUrl({
-                // 目标页面的路径，请根据您的项目结构确认
-                // 通常是 "pages/页面文件名" (不含.ets后缀)
                 url: 'pages/WorkoutPage'
               });
             })
-
-<<<<<<< HEAD
-            Button('开始新的运动')
-              .width('100%')
-              .height(44)
-              .borderRadius(22)
-              .backgroundColor('#007DFF')
-              .fontColor(Color.White)
-              .fontSize(16)
-              .fontWeight(FontWeight.Medium)
-              .margin({
-                top: 4,
-                bottom: 16,
-                left: 16,
-                right: 16
-              })
-          }
-          .width('90%')
-          .backgroundColor('#FFFFFF')
-          .borderRadius(16)
-          .shadow({
-            radius: 8,
-            color: 'rgba(0, 0, 0, 0.05)',
-            offsetX: 0,
-            offsetY: 2
-          })
 
           // 健康报告按钮
           Button() {
@@ -404,11 +375,9 @@ export struct ProfilePage {
           .onClick(() => {
             router.pushUrl({ url: 'pages/HealthReportPage' });
           })
-=======
->>>>>>> 90d227b60d86edb076b4ebc848104fc9442054c4
         }
         .width('100%')
-        .alignItems(HorizontalAlign.Center) // 让所有卡片水平居中
+        .alignItems(HorizontalAlign.Center)
       }
       .backgroundColor('#F0F2F5')
       .height('100%')
