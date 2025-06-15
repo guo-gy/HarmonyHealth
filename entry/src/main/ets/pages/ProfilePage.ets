@@ -373,6 +373,7 @@ export struct ProfilePage {
             offsetX: 0,
             offsetY: 2
           })
+          // 点击跳转到健康报告页面
           .onClick(() => {
             router.pushUrl({ url: 'pages/HealthReportPage' });
           })

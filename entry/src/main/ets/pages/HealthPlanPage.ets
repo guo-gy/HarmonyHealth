@@ -4,14 +4,16 @@ import { planService } from '../services/PlanService';
 import { Plan } from '../models/PlanModels';
 import http from '@ohos.net.http';
 
-// 定义天气数据接口
+// ===== 天气相关接口定义 =====
+// 定义单个天气数据点的接口
 interface WeatherData {
-  max_degree: string;
-  day_weather_short: string;
-  time: string;
+  max_degree: string;      // 最高温度
+  day_weather_short: string; // 天气状况（如：晴、多云、雨等）
+  time: string;            // 时间戳
 }
 
-// 定义 forecast_24h 对象的类型别名
+// 定义24小时天气预报集合的类型
+// 使用Record类型，键为字符串，值为WeatherData类型
 type Forecast24hCollection = Record<string, WeatherData>;
 
 // 新增：为 API 响应中的空对象定义专用类，以满足 ArkTS 严格的类型要求
@@ -22,25 +24,24 @@ class ApiForecast1hObject {}
 class EmptyApiObject {}
 class EmptyApiArray extends Array<object> {}
 
-// 定义 API 响应中 data 对象的接口
+// 定义天气API响应中data对象的接口
 interface WeatherApiResponseData {
-  forecast_24h: Forecast24hCollection;
-  // 其他可能存在的属性，如果需要可以使用 any 或更具体的接口
-  air?: object | null;
-  limit?: object | null;
-  index?: object | null;
-  observe?: object | null;
-  tips?: object | null;
-  alarm?: object[];
-  rise?: object;
-  forecast_1h?: object;
+  forecast_24h: Forecast24hCollection;  // 24小时天气预报数据
+  air?: object | null;                  // 空气质量数据（可选）
+  limit?: object | null;                // 限行信息（可选）
+  index?: object | null;                // 生活指数（可选）
+  observe?: object | null;              // 实时天气观测（可选）
+  tips?: object | null;                 // 天气提示（可选）
+  alarm?: object[];                     // 天气预警（可选）
+  rise?: object;                        // 日出日落信息（可选）
+  forecast_1h?: object;                 // 1小时预报（可选）
 }
 
-// 定义主响应接口
+// 定义完整的天气API响应接口
 interface WeatherResponse {
-  status: number;
-  message: string;
-  data: WeatherApiResponseData;
+  status: number;                       // 响应状态码
+  message: string;                      // 响应消息
+  data: WeatherApiResponseData;         // 天气数据
 }
 
 @Entry
@@ -50,8 +51,8 @@ export struct HealthPlanPage {
   @State selectedDay: number = new Date().getDay() === 0 ? 7 : new Date().getDay();
   @State isLoading: boolean = false;
   @State dailyPlanItems: Plan[] = [];
-  @State temperatures: string[] = Array(7).fill('--°');
-  @State weathers: string[] = Array(7).fill('--');
+  @State temperatures: string[] = Array(7).fill('--°');  // 初始化7天的温度数组
+  @State weathers: string[] = Array(7).fill('--');       // 初始化7天的天气数组
 
   private weekDays = ['一', '二', '三', '四', '五', '六', '日'];
   private months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
@@ -66,10 +67,16 @@ export struct HealthPlanPage {
     ]);
   }
 
-  // 获取天气数据
+  // ===== 天气数据获取方法 =====
+  /**
+   * 获取天气数据
+   * 调用腾讯天气API获取济南历下区的天气信息
+   * 处理返回数据并更新状态变量
+   */
   private async fetchWeatherData(): Promise<void> {
     let httpRequest = http.createHttp();
     try {
+      // 发送HTTP请求获取天气数据
       const response = await httpRequest.request(
         'https://wis.qq.com/weather/common?source=pc&weather_type=observe|forecast_24h&province=山东&city=济南&county=历下区',
         {
@@ -83,26 +90,31 @@ export struct HealthPlanPage {
       console.log(`Weather API Response Code: ${response.responseCode}`);
 
       if (response.responseCode === 200) {
+        // 解析返回的JSON数据
         const data = JSON.parse(response.result as string) as WeatherResponse;
         console.log(`Parsed Weather Data: ${JSON.stringify(data)}`);
 
         if (data.status === 200 && data.data && data.data.forecast_24h) {
+          // 获取24小时预报数据
           const forecastObject = data.data.forecast_24h;
+          // 将对象转换为数组以便处理
           const forecastArray: WeatherData[] = Object.values(forecastObject);
 
-          // 按时间排序以确保顺序正确
+          // 按时间排序确保数据顺序正确
           forecastArray.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
 
           console.log(`Weather Forecast Array (after conversion and sort): ${JSON.stringify(forecastArray)}`);
 
+          // 处理每一天的天气数据
           for (let i = 0; i < forecastArray.length; i++) {
             const dayForecast = forecastArray[i];
             if (dayForecast && dayForecast.time) {
               const forecastDate = new Date(dayForecast.time);
-              // 计算星期几对应的 0-6 索引 (0:周一, ..., 6:周日)
-              let dayOfWeekIndex = forecastDate.getDay(); // 0:周日, 1:周一, ..., 6:周六
-              dayOfWeekIndex = (dayOfWeekIndex === 0) ? 6 : (dayOfWeekIndex - 1); // 转换为 0:周一, ..., 6:周日
+              // 计算星期几对应的索引 (0:周一, ..., 6:周日)
+              let dayOfWeekIndex = forecastDate.getDay();
+              dayOfWeekIndex = (dayOfWeekIndex === 0) ? 6 : (dayOfWeekIndex - 1);
 
+              // 更新对应日期的温度和天气数据
               if (dayOfWeekIndex >= 0 && dayOfWeekIndex < 7) {
                 this.temperatures[dayOfWeekIndex] = `${dayForecast.max_degree}°`;
                 this.weathers[dayOfWeekIndex] = dayForecast.day_weather_short;
@@ -115,8 +127,10 @@ export struct HealthPlanPage {
         }
       }
     } catch (error) {
+      // 错误处理
       console.error('获取天气数据失败:', error instanceof Error ? error.message : String(error));
     } finally {
+      // 清理HTTP请求
       httpRequest.destroy();
     }
   }
