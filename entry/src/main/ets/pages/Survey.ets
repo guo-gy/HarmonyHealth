@@ -223,13 +223,14 @@ struct SurveyPage {
             this.InputField('体重 (kg)', this.surveyData.weight, '请输入您的体重', this.errors.weight,
               (val) => { this.surveyData.weight = val; if (this.errors.weight) this.errors.weight = undefined; })
           } else if (this.currentStep === 2) {
-            this.QuestionGroup('您的主要健康目标是？', this.targets, this.surveyData.target, this.errors.target,
-              (v) => {
-                this.surveyData.target = v;
-                if (this.errors.target) {
-                  this.errors.target = undefined;
-                }
-              })
+            this.InfoTextArea(
+              '目标',
+              this.surveyData.target,
+              '减脂塑形,增肌增重,提高心肺,改善体态,缓解压力,其他',
+              (val) => {
+                this.surveyData.target = val;
+              }
+            )
 
             this.InfoTextArea(
               '其他信息 (可选)',

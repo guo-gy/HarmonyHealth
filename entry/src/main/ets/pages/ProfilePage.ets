@@ -5,10 +5,13 @@ import UserSessionManager from '../common/UserSession';
 import { RecentPlan} from '../models/PlanModels';
 import { planService } from '../services/PlanService';
 import { router } from '@kit.ArkUI';
-import { authService } from '../services/AuthService'
+import { authService } from '../services/AuthService';
+
+
 @Component
 @Entry
 export struct ProfilePage {
+  public onJumpRequest?: (index: number) => void;
   @State isRefreshing: boolean = false;
   @State message: string = '个人中心';
   @State profile: InformationData = {};
@@ -341,9 +344,9 @@ export struct ProfilePage {
             .margin({ bottom: 20 })
             .onClick(() => {
               console.info('开始新的运动 按钮被点击，准备跳转到 WorkoutPage');
-              router.pushUrl({
-                url: 'pages/WorkoutPage'
-              });
+              if (this.onJumpRequest) {
+                this.onJumpRequest(2);
+              }
             })
 
           // 健康报告按钮
