@@ -11,6 +11,14 @@
     {
       "name": "cancel_button_color",
       "value": "#F44336"
+    },
+    {
+      "name": "card_list_background",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "list_item_count_background",
+      "value": "#290a59f7"
     }
   ]
 }

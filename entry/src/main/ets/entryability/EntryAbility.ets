@@ -1,6 +1,7 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
+import ContextManager from '../common/ContextManager';
 
 const DOMAIN = 0x0000;
 
@@ -8,6 +9,10 @@ export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
+    
+    // 初始化上下文管理器
+    ContextManager.setContext(this.context);
+    hilog.info(DOMAIN, 'testTag', '%{public}s', 'Context manager initialized');
   }
 
   onDestroy(): void {

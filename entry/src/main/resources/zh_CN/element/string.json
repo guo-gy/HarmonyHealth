@@ -10,11 +10,19 @@
     },
     {
       "name": "EntryAbility_label",
-      "value": "label"
+      "value": "鸿蒙健康"
     },
     {
       "name": "internet_permission_reason",
       "value": "需要访问网络以实现登录功能"
+    },
+    {
+      "name": "EntryFormAbility_label",
+      "value": "用户数据卡片"
+    },
+    {
+      "name": "HealthDataFormAbility_label",
+      "value": "用户数据卡片"
     }
   ]
 } 

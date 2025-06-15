@@ -57,6 +57,19 @@
             "resource": "$profile:backup_config"
           }
         ],
+      },
+      {
+        "name": "HealthDataFormAbility",
+        "srcEntry": "./ets/entryformability/HealthDataFormAbility.ts",
+        "label": "$string:HealthDataFormAbility_label",
+        "description": "$string:HealthDataFormAbility_desc",
+        "type": "form",
+        "metadata": [
+          {
+            "name": "ohos.extension.form",
+            "resource": "$profile:health_data_widget_config"
+          }
+        ]
       }
     ]
   }

@@ -10,7 +10,7 @@
     },
     {
       "name": "EntryAbility_label",
-      "value": "label"
+      "value": "鸿蒙健康"
     },
     {
       "name": "UserPrivacyDialog_title",
@@ -23,6 +23,54 @@
     {
       "name": "internet_permission_reason",
       "value": "需要访问网络以实现登录功能"
+    },
+    {
+      "name": "EntryFormAbility_desc",
+      "value": "form_description"
+    },
+    {
+      "name": "EntryFormAbility_label",
+      "value": "用户数据卡片"
+    },
+    {
+      "name": "datawidget_desc",
+      "value": "This is a service widget."
+    },
+    {
+      "name": "datawidget_display_name",
+      "value": "用户数据卡片"
+    },
+    {
+      "name": "card_list_title",
+      "value": "Title"
+    },
+    {
+      "name": "card_list_content",
+      "value": "Introduction"
+    },
+    {
+      "name": "DataWidgetFormAbility_label",
+      "value": "用户数据卡片"
+    },
+    {
+      "name": "DataWidgetFormAbility_desc",
+      "value": "显示用户的核心健康数据"
+    },
+    {
+      "name": "HealthDataFormAbility_label",
+      "value": "用户数据卡片"
+    },
+    {
+      "name": "HealthDataFormAbility_desc",
+      "value": "展示用户的核心健康指标"
+    },
+    {
+      "name": "health_widget_desc",
+      "value": "显示用户步数、卡路里、心率等健康数据"
+    },
+    {
+      "name": "health_widget_display_name",
+      "value": "用户数据卡片"
     }
   ]
 }

@@ -4,6 +4,8 @@ import http from '@ohos.net.http';
 import { ServiceResult, AuthData } from '../models/AuthModels';
 import UserSessionManager from '../common/UserSession';
 import {AppConfig} from '../common/config'
+import dataPreferences from '@ohos.data.preferences';
+import ContextManager from '../common/ContextManager';
 
 class AuthService {
 
@@ -61,10 +63,32 @@ class AuthService {
       if (result.code === 200 && result.data && result.data.token) {
         // 登录成功，更新全局会话状态
         UserSessionManager.login(result.data.username,result.data.token);
+        
+        // 同时更新preferences以便卡片服务能够访问
+        await this.updateUserPreferences(result.data.username, true);
       }
       return result;
     } finally {
       httpRequest.destroy();
+    }
+  }
+
+  /**
+   * 更新用户preferences数据
+   */
+  private async updateUserPreferences(username: string, isLogin: boolean): Promise<void> {
+    try {
+      // 从ContextManager获取上下文
+      const context = ContextManager.getContext();
+      
+      const pref = await dataPreferences.getPreferences(context, 'user_info');
+      await pref.put('isLogin', isLogin);
+      await pref.put('userName', username);
+      await pref.flush();
+      
+      console.info(`[AuthService] 已更新preferences: isLogin=${isLogin}, userName=${username}`);
+    } catch (error) {
+      console.error(`[AuthService] 更新preferences失败: ${JSON.stringify(error)}`);
     }
   }
 
@@ -88,6 +112,9 @@ class AuthService {
       if (result.code === 200) {
         // 登出成功，清除全局会话状态
         UserSessionManager.logout();
+        
+        // 同时更新preferences
+        await this.updateUserPreferences('', false);
       }
       return result;
     } finally {
