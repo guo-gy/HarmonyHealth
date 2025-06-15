@@ -1,4 +1,4 @@
-import { HealthReport, BasicInfo, HealthAnalysis, WorkoutTrend, HealthCharts, HealthPlan } from '../models/HealthReportModels';
+import { HealthReport, BasicInfo, HealthAnalysis, HealthCharts } from '../models/HealthReportModels';
 import { informationService } from './InformationService';
 import { planService } from './PlanService';
 
@@ -54,54 +54,14 @@ export class HealthReportService {
     return suggestion;
   }
 
-  private generateMockWorkoutTrend(): WorkoutTrend[] {
-    const today = new Date();
-    const trend: WorkoutTrend[] = [];
-    
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      trend.push({
-        date: `${date.getMonth() + 1}/${date.getDate()}`,
-        count: Math.floor(Math.random() * 3) + 1
-      });
-    }
-    
-    return trend;
-  }
-
-  private generateMockHealthPlans(): HealthPlan[] {
-    return [
-      {
-        type: '体重目标',
-        current: 70,
-        target: 65,
-        period: '3个月',
-        progress: 0.2
-      },
-      {
-        type: '每周运动',
-        current: 3,
-        target: 5,
-        period: '1个月',
-        progress: 0.6
-      },
-      {
-        type: '每日步数',
-        current: 8000,
-        target: 10000,
-        period: '2周',
-        progress: 0.8
-      }
-    ];
-  }
-
   public async generateReport(): Promise<HealthReport> {
     try {
       // 获取用户基本信息
       const heightResult = await informationService.getAttribute('height');
       const weightResult = await informationService.getAttribute('weight');
       const ageResult = await informationService.getAttribute('age');
+      const overResult  = await planService.getOverPlans();
+      const workoutResult  =await planService.getWorkoutPlans();
 
       if (heightResult.code !== 200 || weightResult.code !== 200 || ageResult.code !== 200) {
         throw new Error('Failed to fetch user information');
@@ -110,18 +70,18 @@ export class HealthReportService {
       const height = heightResult.data?.height || 170;
       const weight = weightResult.data?.weight || 60;
       const age = ageResult.data?.age || 25;
-      const workoutCount = Math.floor(Math.random() * 7) + 1; // 模拟运动次数
-
+      const over = overResult.data?.recent_plans_count||0
+      const workoutCount = workoutResult.data?.recent_plans_count||[0,0,0,0,0,0,0];
       const bmi = this.calculateBMI(height, weight);
       const bmiStatus = this.getBMIStatus(bmi);
-      const workoutAnalysis = this.getWorkoutAnalysis(workoutCount);
-      const healthSuggestion = this.getHealthSuggestion(bmi, workoutCount);
+      const workoutAnalysis = this.getWorkoutAnalysis(over);
+      const healthSuggestion = this.getHealthSuggestion(bmi, over);
 
       const basicInfo: BasicInfo = {
         height,
         weight,
         age,
-        workoutCount
+        over
       };
 
       const analysis: HealthAnalysis = {
@@ -132,8 +92,7 @@ export class HealthReportService {
       };
 
       const charts: HealthCharts = {
-        workoutTrend: this.generateMockWorkoutTrend(),
-        plans: this.generateMockHealthPlans()
+        workoutCount
       };
 
       return {

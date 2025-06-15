@@ -1,4 +1,4 @@
-import { HealthReport, WorkoutTrend, HealthPlan } from '../models/HealthReportModels';
+import { HealthCharts, HealthReport } from '../models/HealthReportModels';
 import { HealthReportService } from '../services/HealthReportService';
 
 @Entry
@@ -7,7 +7,7 @@ struct HealthReportPage {
   @State report: HealthReport | null = null;
   @State isLoading: boolean = true;
   private healthReportService: HealthReportService = HealthReportService.getInstance();
-
+  @State advise: string='';
   aboutToAppear() {
     this.generateReport();
   }
@@ -23,7 +23,7 @@ struct HealthReportPage {
   }
 
   @Builder
-  WorkoutTrendChart(trend: WorkoutTrend[]) {
+  WorkoutTrendChart(trend: HealthCharts) {
     Column() {
       Text('运动趋势')
         .fontSize(18)
@@ -31,20 +31,20 @@ struct HealthReportPage {
         .margin({ bottom: 16 })
 
       Row() {
-        ForEach(trend, (item: WorkoutTrend) => {
+        ForEach(trend.workoutCount, (item: number, index: number) => {
           Column() {
-            Text(item.count.toString())
+            Text(item.toString())
               .fontSize(12)
               .fontColor('#666666')
 
             Column()
               .width(20)
-              .height(`${Math.min(item.count * 20, 100)}%`)
+              .height(`${Math.min(item * 20, 100)}%`)
               .backgroundColor('#007DFF')
               .borderRadius(10)
               .margin({ top: 5, bottom: 5 })
 
-            Text(item.date)
+            Text(index.toString())
               .fontSize(12)
               .fontColor('#666666')
           }
@@ -64,63 +64,6 @@ struct HealthReportPage {
     .margin({ bottom: 16 })
   }
 
-  @Builder
-  FuturePlansChart(plans: HealthPlan[]) {
-    Column() {
-      Text('未来规划')
-        .fontSize(18)
-        .fontWeight(FontWeight.Bold)
-        .margin({ bottom: 16 })
-
-      ForEach(plans, (item: HealthPlan) => {
-        Column() {
-          Row() {
-            Column() {
-              Text(item.type)
-                .fontSize(14)
-                .fontWeight(FontWeight.Medium)
-                .fontColor('#333333')
-
-              Text(item.period)
-                .fontSize(12)
-                .fontColor('#666666')
-                .margin({ top: 4 })
-            }
-            .layoutWeight(1)
-            .alignItems(HorizontalAlign.Start)
-
-            Text(`${item.current}/${item.target}`)
-              .fontSize(14)
-              .fontColor('#666666')
-          }
-          .width('100%')
-          .margin({ bottom: 8 })
-
-          Row() {
-            Column()
-              .width(`${Math.min((item.current / item.target) * 100, 100)}%`)
-              .height(8)
-              .backgroundColor('#007DFF')
-              .borderRadius(4)
-
-            Column()
-              .width(`${Math.max(100 - (item.current / item.target) * 100, 0)}%`)
-              .height(8)
-              .backgroundColor('#EEEEEE')
-              .borderRadius(4)
-          }
-          .width('100%')
-        }
-        .width('100%')
-        .margin({ bottom: 16 })
-      })
-    }
-    .width('100%')
-    .backgroundColor(Color.White)
-    .borderRadius(16)
-    .padding(16)
-  }
-
   build() {
     Column() {
       // 顶部标题
@@ -131,7 +74,12 @@ struct HealthReportPage {
           .fontColor('#333333')
       }
       .width('100%')
-      .padding({ left: 20, right: 20, top: 20, bottom: 10 })
+      .padding({
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: 10
+      })
 
       if (this.isLoading) {
         LoadingProgress()
@@ -190,7 +138,7 @@ struct HealthReportPage {
                     Text('运动次数')
                       .fontSize(14)
                       .fontColor('#666666')
-                    Text(`${this.report.basicInfo.workoutCount}次`)
+                    Text(`${this.report.basicInfo.over}次`)
                       .fontSize(16)
                       .fontWeight(FontWeight.Medium)
                       .margin({ top: 4 })
@@ -239,134 +187,9 @@ struct HealthReportPage {
             .padding(16)
 
             // 运动趋势图表
-            this.WorkoutTrendChart(this.report.charts.workoutTrend)
+            this.WorkoutTrendChart(this.report.charts)
 
-            // 未来规划图表
-            this.FuturePlansChart(this.report.charts.plans)
 
-            // 健康计划
-            Column() {
-              Text('健康计划')
-                .fontSize(20)
-                .fontWeight(FontWeight.Bold)
-                .margin({ bottom: 16 })
-
-              // 长期规划
-              Column() {
-                Text('长期规划')
-                  .fontSize(16)
-                  .fontWeight(FontWeight.Medium)
-                  .margin({ bottom: 8 })
-                  .fontColor('#666666')
-                
-                Text('基于您的BMI指数和运动习惯，AI建议您：')
-                  .fontSize(14)
-                  .margin({ bottom: 8 })
-                  .fontColor('#666666')
-                
-                Text('1. 制定3个月减重计划，目标体重65kg')
-                  .fontSize(14)
-                  .margin({ bottom: 4 })
-                  .fontColor('#666666')
-                
-                Text('2. 建立每周5次运动的习惯')
-                  .fontSize(14)
-                  .margin({ bottom: 4 })
-                  .fontColor('#666666')
-                
-                Text('3. 保持每日10000步的运动量')
-                  .fontSize(14)
-                  .margin({ bottom: 16 })
-                  .fontColor('#666666')
-              }
-              .width('100%')
-              .padding(16)
-              .backgroundColor('#F5F5F5')
-              .borderRadius(8)
-              .margin({ bottom: 16 })
-
-              // 短期规划
-              Column() {
-                Text('短期规划')
-                  .fontSize(16)
-                  .fontWeight(FontWeight.Medium)
-                  .margin({ bottom: 8 })
-                  .fontColor('#666666')
-                
-                Text('未来两周的具体行动计划：')
-                  .fontSize(14)
-                  .margin({ bottom: 8 })
-                  .fontColor('#666666')
-                
-                Text('1. 每天记录饮食和运动情况')
-                  .fontSize(14)
-                  .margin({ bottom: 4 })
-                  .fontColor('#666666')
-                
-                Text('2. 每周进行3次力量训练')
-                  .fontSize(14)
-                  .margin({ bottom: 4 })
-                  .fontColor('#666666')
-                
-                Text('3. 保持每天8000步的基础运动量')
-                  .fontSize(14)
-                  .margin({ bottom: 16 })
-                  .fontColor('#666666')
-              }
-              .width('100%')
-              .padding(16)
-              .backgroundColor('#F5F5F5')
-              .borderRadius(8)
-              .margin({ bottom: 16 })
-
-              // 计划列表
-              ForEach(this.report.charts.plans, (plan: HealthPlan) => {
-                Column() {
-                  Row() {
-                    Text(plan.type)
-                      .fontSize(16)
-                      .fontWeight(FontWeight.Medium)
-                    Blank()
-                    Text(plan.period)
-                      .fontSize(14)
-                      .fontColor('#666666')
-                  }
-                  .width('100%')
-                  .margin({ bottom: 8 })
-
-                  Row() {
-                    Text(`${plan.current}/${plan.target}`)
-                      .fontSize(14)
-                      .fontColor('#666666')
-                    Blank()
-                    Text(`${Math.round(plan.progress * 100)}%`)
-                      .fontSize(14)
-                      .fontColor('#666666')
-                  }
-                  .width('100%')
-                  .margin({ bottom: 8 })
-
-                  Progress({ 
-                    value: plan.progress * 100, 
-                    total: 100,
-                    type: ProgressType.Linear 
-                  })
-                    .width('100%')
-                    .height(4)
-                    .color('#007DFF')
-                    .backgroundColor('#E5E5E5')
-                }
-                .width('100%')
-                .padding(16)
-                .backgroundColor(Color.White)
-                .borderRadius(8)
-                .margin({ bottom: 16 })
-              })
-            }
-            .width('100%')
-            .padding(16)
-            .backgroundColor('#F5F5F5')
-            .borderRadius(16)
           }
           .width('100%')
           .padding({ left: 16, right: 16, bottom: 16 })

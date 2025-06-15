@@ -66,3 +66,7 @@ export interface GetRecentPlansSuccessData {
 export interface GetOverPlansSuccessData {
   recent_plans_count: number;
 }
+
+export interface GetWorkoutData {
+  recent_plans_count: number[];
+}

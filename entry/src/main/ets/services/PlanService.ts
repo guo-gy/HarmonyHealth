@@ -1,7 +1,8 @@
 import http from '@ohos.net.http';
 import { AppConfig } from '../common/config';
 import UserSessionManager from '../common/UserSession';
-import { NewPlanData,RecentPlan,GetRecentPlansSuccessData,GetOverPlansSuccessData } from '../models/PlanModels';
+import { NewPlanData,RecentPlan,GetRecentPlansSuccessData,GetOverPlansSuccessData,
+  GetWorkoutData } from '../models/PlanModels';
 
 // ======================================================
 // === 类型定义部分 (确保每一个都被导出) ===
@@ -145,6 +146,27 @@ class PlanService {
   }
   async getOverPlans(): Promise<ApiResponse<GetOverPlansSuccessData>> {
     const url = `${this.BASE_URL}/api/plan/over/`;
+    const token = await UserSessionManager.getToken();
+    if (!token) return { code: 401, message: '用户未登录', data: null };
+
+    const httpRequest = http.createHttp();
+    try {
+      const response = await httpRequest.request(url, {
+        method: http.RequestMethod.GET,
+        header: { 'Authorization': `Token ${token}` },
+      });
+      if (response.responseCode === 200) {
+        return JSON.parse(response.result as string);
+      }
+      return { code: response.responseCode, message: '获取最近完成计划数失败', data: null };
+    } catch (err) {
+      return { code: -1, message: '网络请求异常', data: null };
+    } finally {
+      httpRequest.destroy();
+    }
+  }
+  async getWorkoutPlans(): Promise<ApiResponse<GetWorkoutData>> {
+    const url = `${this.BASE_URL}/api/plan/workout/`;
     const token = await UserSessionManager.getToken();
     if (!token) return { code: 401, message: '用户未登录', data: null };
 

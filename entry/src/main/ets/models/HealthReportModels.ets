@@ -2,7 +2,7 @@ export interface BasicInfo {
   height: number;
   weight: number;
   age: number;
-  workoutCount: number;
+  over: number;
 }
 
 export interface HealthAnalysis {
@@ -12,22 +12,8 @@ export interface HealthAnalysis {
   healthSuggestion: string;
 }
 
-export interface WorkoutTrend {
-  date: string;
-  count: number;
-}
-
-export interface HealthPlan {
-  type: string;
-  current: number;
-  target: number;
-  period: string;
-  progress: number;
-}
-
 export interface HealthCharts {
-  workoutTrend: WorkoutTrend[];
-  plans: HealthPlan[];
+  workoutCount: number[];
 }
 
 export interface HealthReport {

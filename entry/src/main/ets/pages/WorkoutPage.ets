@@ -277,7 +277,7 @@ export struct WorkoutPage {
         this.isMapLoaded = true;
         console.info('地图初始化成功');
         // 地图加载成功后请求位置权限
-        this.requestLocationPermission();
+        //this.requestLocationPermission();
       }, 1000);
     } catch (error) {
       console.error(`地图初始化失败: ${JSON.stringify(error)}`);

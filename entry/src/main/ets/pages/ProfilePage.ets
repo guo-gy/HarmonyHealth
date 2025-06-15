@@ -7,6 +7,7 @@ import { planService } from '../services/PlanService';
 import { router } from '@kit.ArkUI';
 import { authService } from '../services/AuthService'
 @Component
+@Entry
 export struct ProfilePage {
   @State isRefreshing: boolean = false;
   @State message: string = '个人中心';
