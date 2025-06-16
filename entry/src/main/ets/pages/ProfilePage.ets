@@ -2,13 +2,12 @@ import promptAction from '@ohos.promptAction';
 import { InformationData } from '../models/InformationModels';
 import { informationService } from '../services/InformationService';
 import UserSessionManager from '../common/UserSession';
-import { RecentPlan} from '../models/PlanModels';
+import { RecentPlan } from '../models/PlanModels';
 import { planService } from '../services/PlanService';
 import { router } from '@kit.ArkUI';
 import { authService } from '../services/AuthService';
+import { preferences } from '@kit.ArkData';
 
-
-@Component
 @Entry
 export struct ProfilePage {
   public onJumpRequest?: (index: number) => void;
@@ -21,7 +20,7 @@ export struct ProfilePage {
   @State currentUsername: string = '访客';
   @State recentPlanRecords: RecentPlan[] = [];
   @State isManualRefreshing: boolean = false; // 控制刷新按钮的状态
-  @State over: number=0;
+  @State over: number = 0;
 
   // --- 生命周期函数 ---
 
@@ -72,6 +71,7 @@ export struct ProfilePage {
       this.isManualRefreshing = false;
     }
   }
+
   async handleLogout() {
     console.info('用户确认退出，开始执行登出流程...');
 
@@ -88,15 +88,17 @@ export struct ProfilePage {
 
     promptAction.showToast({ message: '已退出登录' });
   }
+
   // 加载个人资料的独立函数
   async loadProfileData() {
+    const context = getContext(this);
     const heightResult = await informationService.getAttribute('height');
     const weightResult = await informationService.getAttribute('weight');
     const ageResult = await informationService.getAttribute('age');
     const infoResult = await informationService.getAttribute('information');
     const targetResult = await informationService.getAttribute('target');
     const overResult = await planService.getOverPlans();
-
+    let isLoggedIn = false;
     const newProfile: InformationData = {};
     if (heightResult.code === 200 && heightResult.data) {
       newProfile.height = heightResult.data.height;
@@ -115,10 +117,40 @@ export struct ProfilePage {
     }
     if (overResult.code === 200 && overResult.data) {
       this.over = overResult.data.recent_plans_count;
+      isLoggedIn = true;
     }
 
 
     this.profile = newProfile;
+    const pref = await preferences.getPreferences(context, 'user_profile_prefs');
+
+    // 准备要存储的数据
+
+    const userName = this.currentUsername; // '张三'
+    const userHeight = this.profile.height; // '185'
+    const weight = this.profile.weight; // '78'
+    const age = this.profile.age; // '28'
+    const sportCount = this.over; // '10'
+
+    // 【日志1】打印将要存储的数据
+    console.log(`[MainApp] 即将存储数据到 Preferences:
+      isLoggedIn=${isLoggedIn},
+      userName=${userName},
+      userHeight=${userHeight},
+      weight=${weight},
+      age=${age},
+      sportCount=${sportCount}`);
+
+    await pref.put('isLoggedIn', isLoggedIn);
+    await pref.put('userName', String(userName));
+    await pref.put('userHeight', String(userHeight));
+    await pref.put('weight', String(weight));
+    await pref.put('age', String(age));
+    await pref.put('sportCount', String(sportCount)); // 确保是字符串
+    await pref.flush();
+
+    // 【日志2】确认存储完成
+    console.log('[MainApp] 数据成功写入 Preferences!');
   }
 
   // 加载最近计划的独立函数
