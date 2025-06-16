@@ -35,6 +35,7 @@ export interface ChatRequestBody {
 // ======================================================
 
 class ChatService {
+  private weather=""
   private readonly BASE_URL = AppConfig.API_BASE_URL;
 
   /**
@@ -43,6 +44,8 @@ class ChatService {
    * @returns 返回一个Promise，包含处理后的AI回复数据
    */
   async sendMessage(requestBody: ChatRequestBody): Promise<ApiResponse<AiReplyData>> {
+    this.weather = AppStorage.Get<string>("weather");
+
     const token = await UserSessionManager.getToken();
     if (!token) {
       return { code: 401, message: '用户未登录或Token已失效', data: null };
@@ -55,7 +58,7 @@ class ChatService {
         // 创建一个只包含必要字段的新对象
         const newMsg: ApiChatMessage = {
           role: msg.role,
-          content: msg.content,
+          content: msg.content+this.weather,
         };
 
         // 如果是 assistant 角色且有工具调用，则保留 tool_calls

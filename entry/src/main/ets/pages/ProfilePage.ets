@@ -74,7 +74,9 @@ export struct ProfilePage {
 
   async handleLogout() {
     console.info('用户确认退出，开始执行登出流程...');
-
+    const context = getContext(this);
+    const pref = await preferences.getPreferences(context, 'user_profile_prefs');
+    await pref.put('isLoggedIn', false);
     // 等待登出操作完成
     await authService.logout();
 

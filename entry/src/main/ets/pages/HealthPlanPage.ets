@@ -104,7 +104,7 @@ export struct HealthPlanPage {
           forecastArray.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
 
           console.log(`Weather Forecast Array (after conversion and sort): ${JSON.stringify(forecastArray)}`);
-
+          let weather=""
           // 处理每一天的天气数据
           for (let i = 0; i < forecastArray.length; i++) {
             const dayForecast = forecastArray[i];
@@ -118,7 +118,9 @@ export struct HealthPlanPage {
               if (dayOfWeekIndex >= 0 && dayOfWeekIndex < 7) {
                 this.temperatures[dayOfWeekIndex] = `${dayForecast.max_degree}°`;
                 this.weathers[dayOfWeekIndex] = dayForecast.day_weather_short;
+                weather+=this.weathers[dayOfWeekIndex];
               }
+              AppStorage.SetOrCreate("weather", weather);
             }
           }
           // 触发UI更新

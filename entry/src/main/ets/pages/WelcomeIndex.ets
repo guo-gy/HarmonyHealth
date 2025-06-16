@@ -1,5 +1,6 @@
 import router from '@ohos.router';
 import { UserPrivacyDialog } from '../dialog/UserPrivacyDialog';
+import UserSessionManager from '../common/UserSession'
 
 interface WelcomeItem {
   title: string;
@@ -42,6 +43,9 @@ struct WelcomeIndex {
   ];
 
   aboutToAppear() {
+    if (UserSessionManager.isUserLoggedIn()){
+      router.pushUrl({ url: 'pages/index' });
+    }
     // 正确初始化对话框控制器
     this.dialogController = new CustomDialogController({
       builder: UserPrivacyDialog({
